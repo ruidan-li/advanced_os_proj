@@ -5,12 +5,12 @@ import socket
 #         'client.id': socket.gethostname()}
 
 class KafkaProducer(Producer):
-    def __init__(self, config):
+    def __init__(self, config, topic):
         super(KafkaProducer, self).__init__(config)
-        self._topic = config['topic']
+        self._topic = topic
 
-    def produce(self, key, val):
-        self._producer.produce(self._topic, key=key, value=val, callback=self.delivery_callback)
+    def perform_produce(self, key, val):
+        self.produce(self._topic, key=key, value=val, callback=self.delivery_callback)
 
     @staticmethod
     def delivery_callback(err, msg):
@@ -23,5 +23,3 @@ class KafkaProducer(Producer):
             print("Produced event to topic {topic}: key = {key:12} value = {value:12}".format(
                 topic=msg.topic(), key=msg.key().decode('utf-8'), value=msg.value().decode('utf-8')))
 
-    def poll(self, block_sec):
-        self._producer.poll(block_sec)

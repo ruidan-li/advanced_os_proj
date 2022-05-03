@@ -5,9 +5,9 @@ from confluent_kafka import Consumer, KafkaError, KafkaException, OFFSET_BEGINNI
 #         'auto.offset.reset': 'smallest'}
 
 class KafkaConsumer(Consumer):
-    def __init__(self, config):
+    def __init__(self, config, topic):
         super(KafkaConsumer, self).__init__(config)
-        self._topic = config['topic']
+        self._topic = topic
         self._running = False
         self.reset = False
     
@@ -31,7 +31,7 @@ class KafkaConsumer(Consumer):
                     wait_count += 1
                     if wait_count > wait:
                         self.stop()
-                if msg.error():
+                elif msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         # End of partition event
                         print('%% %s [%d] reached end at offset %d\n' %

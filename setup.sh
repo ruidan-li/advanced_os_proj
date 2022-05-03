@@ -9,3 +9,5 @@ fi
 source env/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirement.txt
+
+chmod +x ./src/*_driver.py

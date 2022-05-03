@@ -6,16 +6,16 @@ from producer import KafkaProducer
 
 def start_produce(config):
     # Create Producer instance
-    producer = KafkaProducer(config)
-
+    producer = KafkaProducer(config, topic=config.pop('topic'))
+    
     msg_key = ['a', 'b', 'c', 'd', 'e']
     msg_val = ['v_a', 'v_b', 'v_c', 'v_d', 'v_e']
 
     for i in range(len(msg_key)):
-        producer.produce(msg_key[i], msg_val[i])
+        producer.perform_produce(msg_key[i], msg_val[i])
 
     # Block until the messages are sent.
-    producer.poll(10000)
+    producer.poll(10)
     producer.flush()
 
 

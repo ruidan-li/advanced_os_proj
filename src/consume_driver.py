@@ -5,11 +5,12 @@ from configparser import ConfigParser
 from consumer import KafkaConsumer
 
 def start_consume(config):
+    timeout = int(config.pop('timeout'))
     # Create Producer instance
-    consumer = KafkaConsumer(config)
+    consumer = KafkaConsumer(config, topic=[config.pop('topic')])
 
     consumer.start()
-    consumer.basic_consume(config['timeout'])
+    consumer.basic_consume(timeout)
 
 
 
@@ -24,6 +25,7 @@ if __name__ == '__main__':
     config_parser = ConfigParser()
     config_parser.read_file(args.config_file)
     config = dict(config_parser['default'])
+    config.update(config_parser['producer'])    # for topic
     config.update(config_parser['consumer'])
     print(config)
     start_consume(config)
