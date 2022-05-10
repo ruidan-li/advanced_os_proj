@@ -9,7 +9,7 @@ class KafkaProducer(Producer):
         super(KafkaProducer, self).__init__(config)
         self._topic = topic
 
-    def perform_produce(self, key, val):
+    def perform_produce(self, key=None, val=None):
         self.produce(self._topic, key=key, value=val, callback=self.delivery_callback)
 
     @staticmethod

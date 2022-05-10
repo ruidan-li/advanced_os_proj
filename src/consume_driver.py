@@ -4,10 +4,10 @@ from argparse import ArgumentParser, FileType
 from configparser import ConfigParser
 from consumer import KafkaConsumer
 from multiprocessing import Process
-import os
+# import os
 
 def start_consume(config):
-    print(os.getpid())
+    # print(os.getpid())
     timeout = int(config.pop('timeout'))
     # Create Producer instance
     consumer = KafkaConsumer(config, topic=[config.pop('topic')])
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     config.update(config_parser['consumer'])
     print(config)
     proc = []
-    for i in args.num_proc:
+    for i in range(args.num_proc):
         proc.append(Process(target=start_consume, args=(config,)))
         proc[-1].start()
     
