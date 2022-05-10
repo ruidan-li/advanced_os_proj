@@ -1,5 +1,5 @@
 from confluent_kafka import Consumer, KafkaError, KafkaException, OFFSET_BEGINNING
-
+import os
 # conf = {'bootstrap.servers': "host1:9092,host2:9092",
 #         'group.id': "foo",
 #         'auto.offset.reset': 'smallest'}
@@ -45,8 +45,12 @@ class KafkaConsumer(Consumer):
             self.close()
 
     def msg_process(self, msg):
-        print("Consumed event from topic {topic}: key = {key:12} value = {value:12}".format(
-                    topic=msg.topic(), key=msg.key().decode('utf-8'), value=msg.value().decode('utf-8')))
+        print("{pid} *** Consumed event from topic {topic} (partitions: {partition}): key = {key:12} value = {value:12}".format(
+                    pid=os.getpid(),
+                    topic=msg.topic(),
+                    partition=self.assignment(),
+                    key=msg.key().decode('utf-8'),
+                    value=msg.value().decode('utf-8')))
 
     def reset_offset(consumer, partitions):
         # Set up a callback to handle the '--reset' flag.
