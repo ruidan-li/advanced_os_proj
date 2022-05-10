@@ -70,13 +70,16 @@ class KafkaConsumer(Consumer):
     def calc_lag(self, curr_p):
         current_offset = self.position(curr_p)
         for p in current_offset:
-            latest_offset = self.get_watermark_offsets(p)
-            if not latest_offset:
-                print('Unable to get the latest offset')
+            if p.offset > 0:
+                latest_offset = self.get_watermark_offsets(p)
+                if not latest_offset:
+                    print('Unable to get the latest offset')
+                else:
+                    # lag == -1 means it's fully caught up and waiting new messages
+                    latest_offset = latest_offset[1] - 1
+                    print(f'LAG @ partition {p.partition}: {latest_offset} - {p.offset} = {latest_offset - p.offset}')
             else:
-                # lag == -1 means it's fully caught up and waiting new messages
-                latest_offset = latest_offset[1] - 1
-                print(f'LAG @ partition {p.partition}: {latest_offset} - {p.offset} = {latest_offset - p.offset}')
+                print(f'Not actively reading from {p.partition}')
 
     @staticmethod
     def calc_trip_time(msg):
