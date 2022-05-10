@@ -40,6 +40,7 @@ class KafkaConsumer(Consumer):
                         raise KafkaException(msg.error())
                 else:
                     self.msg_process(msg)
+                    self.calc_lag()
         finally:
             # Close down consumer to commit final offsets.
             self.close()
@@ -60,3 +61,11 @@ class KafkaConsumer(Consumer):
             consumer.assign(partitions)
 
 
+    def calc_lag(self):
+        latest_offset = self.highwater()
+        if not latest_offset:
+            print('Unable to get the latest offset')
+        else:
+            latest_offset = latest_offset - 1
+            current_offset = self.position
+            print(f'{latest_offset} - {current_offset} = {latest_offset - current_offset}')
