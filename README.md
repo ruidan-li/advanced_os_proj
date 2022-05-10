@@ -8,9 +8,17 @@ https://docs.confluent.io/clients-confluent-kafka-python/current/overview.html
 $ source setup.sh 
 ```
 
-### Example
+### Example run
+* To produce: `./produce_driver.py config_file num_proc msg_count`
+* To consume: `./consume_driver.py config_file num_proc`
+    * config_file - path to the configuration file
+    * num_proc - how many processes to spin up
+    * msg_count - total number of messages to produce
+
+See example:
 ```
 $ cd src 
+
 $ ./produce_driver.py basic.ini 5 10 
 {'bootstrap.servers': '129.114.108.39:9092,129.114.109.13:9092,129.114.108.242:9092', 'topic': 'test'}
 Produced event to topic test: key = 0            value = {"value": "v_0", "timestamp": 1652162956.099297}
@@ -23,6 +31,7 @@ Produced event to topic test: key = 4            value = {"value": "v_4", "times
 Produced event to topic test: key = 2            value = {"value": "v_2", "timestamp": 1652162956.104955}
 Produced event to topic test: key = 1            value = {"value": "v_1", "timestamp": 1652162956.100667}
 Produced event to topic test: key = 9            value = {"value": "v_9", "timestamp": 1652162956.108047}
+
 $ ./consume_driver.py basic.ini 2 
 {'bootstrap.servers': '129.114.108.39:9092,129.114.109.13:9092,129.114.108.242:9092', 'topic': 'test', 'group.id': 'experiment_group_1', 'timeout': '1', 'auto.offset.reset': 'earliest'}
 *** 7386 *** topic test (partitions: [0, 1]): key = 0            value = {"value": "v_0", "timestamp": 1652162956.099297} (6.465930938720703 sec used)
