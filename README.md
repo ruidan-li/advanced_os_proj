@@ -57,3 +57,29 @@ LAG @ partition 1: 225 - 226 = -1
 
 $
 ```
+
+### Update 05/11/22
+* Added silent mode in producer
+* Added sample interval arg in consumer (default to 5,000)
+See example below:
+```
+$ ./produce_driver.py basic.ini 5 5000 -s
+{'bootstrap.servers': '129.114.108.39:9092,129.114.109.13:9092,129.114.108.242:9092', 'topic': 'test'}
+
+$ ./consume_driver.py basic.ini 2 1000 > tmp.out
+
+$ grep Writing 'tmp.out'
+Writing metric to /tmp/kafka_run_569ed640-3140-4231-9851-47b5bd92f0ca.out
+Writing metric to /tmp/kafka_run_24605fdc-55f0-4b8a-9120-84f8b384fc33.out
+
+$ cat /tmp/kafka_run_569ed640-3140-4231-9851-47b5bd92f0ca.out
+timestamp,partition,latest_offset,current_position
+1652281034.934373,1,5261,3760
+1652281035.552668,1,5261,4760% 
+
+$ cat /tmp/kafka_run_24605fdc-55f0-4b8a-9120-84f8b384fc33.out
+timestamp,partition,latest_offset,current_position
+1652281034.934477,0,5207,3710
+1652281035.552669,0,5207,4710%
+$
+```
