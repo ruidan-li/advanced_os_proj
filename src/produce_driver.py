@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser, FileType
 from configparser import ConfigParser
+from time import sleep
 from producer import KafkaProducer
 from multiprocessing import Process
 import arrow
@@ -13,19 +14,25 @@ def start_produce(config, max_ct, start_index, step_size, silent_mode):
     producer = KafkaProducer(config, topic=topic)
     
     msg_key = [str(x) for x in range(start_index, max_ct, step_size)]
-    msg_val = [json.dumps({'value': f'v_{x}', 'timestamp': arrow.now().timestamp()}) for x in msg_key]
 
     if not silent_mode:
         for i in range(len(msg_key)):
-            producer.perform_produce(msg_key[i], msg_val[i])
+            do_sleep(i)
+            msg_val = json.dumps({'value': f'v_{msg_key[i]}', 'timestamp': arrow.now().timestamp()}) 
+            producer.perform_produce(msg_key[i], msg_val)
     else:
         for i in range(len(msg_key)):
-            producer.produce(topic, key=msg_key[i], value=msg_val[i], callback=None)
+            do_sleep(i)
+            msg_val = json.dumps({'value': f'v_{msg_key[i]}', 'timestamp': arrow.now().timestamp()}) 
+            producer.perform_produce(msg_key[i], msg_val)
 
     # Block until the messages are sent.
     producer.poll(10)
     producer.flush()
 
+def do_sleep(i):
+    pass
+    # sleep(0.000008)
 
 if __name__ == '__main__':
     # Parse the command line.

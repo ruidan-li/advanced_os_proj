@@ -83,3 +83,10 @@ timestamp,partition,latest_offset,current_position
 1652281035.552669,0,5207,4710%
 $
 ```
+
+### Update 05/13/22
+in the advance_os_proj folder, run
+```
+. run.sh            # run producer and consumer
+python3 analysis.py # analysis, generate two txt files
+```
