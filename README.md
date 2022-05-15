@@ -84,9 +84,9 @@ timestamp,partition,latest_offset,current_position
 $
 ```
 
-### Update 05/13/22
+### Update 05/15/22
 in the advance_os_proj folder, run
 ```
-. run.sh            # run producer and consumer
-python3 analysis.py # analysis, generate two txt files
+source env/bin/activate   
+. bmk_multi.sh            # run multiple experiments (adjust parameters inside)
 ```
