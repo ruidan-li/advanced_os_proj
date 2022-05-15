@@ -1,8 +1,8 @@
 source env/bin/activate
-rm -rf logs
+rm -rf logs *.txt
 mkdir -p logs
 cd src
-./consume_driver.py basic.ini 2 100 &
-./produce_driver.py basic.ini 2 100000
+./consume_driver.py $3 $1 100 &
+./produce_driver.py $3 $2 100000
 cd ..
 wait

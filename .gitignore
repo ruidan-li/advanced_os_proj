@@ -131,4 +131,4 @@ dmypy.json
 # tmp output
 src/*.out
 logs/*
-*.txt
+.DS_Store

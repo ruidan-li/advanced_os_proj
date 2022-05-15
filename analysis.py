@@ -49,10 +49,10 @@ for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs")):
 time_diff_avg_list = convert_multi_list_to_avg_list(time_diff_multi_list)
 indx_diff_avg_list = convert_multi_list_to_avg_list(indx_diff_multi_list)
 
-with open("time_diff_avg_list.txt", "w") as f:
+with open(f"{sys.argv[1]}/diff_time.txt", "w") as f:
     for i in time_diff_avg_list:
         f.write(f"{i}\n")
 
-with open("indx_diff_avg_list.txt", "w") as f:
+with open(f"{sys.argv[1]}/diff_indx.txt", "w") as f:
     for i in indx_diff_avg_list:
         f.write(f"{i}\n")
