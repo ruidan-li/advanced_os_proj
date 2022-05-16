@@ -132,3 +132,4 @@ dmypy.json
 src/*.out
 logs/*
 .DS_Store
+.vscode
