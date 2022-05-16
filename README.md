@@ -91,7 +91,7 @@ in the advance_os_proj folder, run the following to perform benchmarking and to 
 # these configs will be copied to current.ini by the benchmarking code with the topic adjusted
 # go back to the project root folder
 source env/bin/activate
-# adjust parameters inside bmk_multi.sh, maybe like [this](https://github.com/ruidan-li/advanced_os_proj/blob/0ab42191dc3b07e6620cdc1de703dfc46c7966b2/bmk_multi.sh#L20-L28)
+# adjust parameters inside bmk_multi.sh
 . bmk_multi.sh            # run multiple experiments
 # adjust parameters before line 15 and run
 python3 graph.py          
