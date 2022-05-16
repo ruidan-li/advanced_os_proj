@@ -13,7 +13,9 @@ def start_produce(config, max_ct, start_index, step_size, silent_mode):
     topic = config.pop('topic')
     producer = KafkaProducer(config, topic=topic)
     
-    msg_key = [str(x) for x in range(start_index, max_ct, step_size)]
+    # msg_key = [str(x) for x in range(start_index, max_ct, step_size)]
+    msg_key = [str(x) for x in range(max_ct)]
+    print("num of keys of this producer", len(msg_key))
 
     if not silent_mode:
         for i in range(len(msg_key)):
@@ -32,7 +34,7 @@ def start_produce(config, max_ct, start_index, step_size, silent_mode):
 
 def do_sleep(i):
     pass
-    # sleep(0.000008)
+    sleep(0.000025)
 
 if __name__ == '__main__':
     # Parse the command line.

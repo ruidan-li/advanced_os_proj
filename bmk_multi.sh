@@ -4,30 +4,20 @@
 # co=$3 # num. consumer
 # po=$4 # num. producer
 # vr=$5 # version of the code
+# op=$6 number of operations
+# sa=$7 sampling interval
 
 rf=3
-vr=3
-partition_2_4() { # pa=$1
-for co in 2 4 6 8; do
-    for po in 2 4 6 8; do
-        echo $rf $1 $co $po $vr
-        . bmk.sh $rf $1 $co $po $vr
-        sleep 1
-    done
-done
+vr=36
+op=50000
+sa=100
+
+partition() {
+    pa=16
+    co=8
+    po=6
+    echo     $rf $pa $co $po $vr $op $sa
+    . bmk.sh $rf $pa $co $po $vr $op $sa
 }
 
-partition_8_16() { # pa=$1
-    for co in 2 4 6 8; do
-        for po in 2 4 6 8; do
-            echo $rf $1 $co $po $vr
-            . bmk.sh $rf $1 $co $po $vr
-            sleep 1
-        done
-    done
-}
-
-partition_2_4 2
-partition_2_4 4
-partition_8_16 8
-partition_8_16 16
+partition

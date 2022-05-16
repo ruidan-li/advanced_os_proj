@@ -1,13 +1,10 @@
-# rf=1 # replication factor
-# pa=8 # partition count
-# co=2 # num. consumer
-# po=4 # num. producer
-# vr=2 # version of the code
 rf=$1 # replication factor
 pa=$2 # partition count
 co=$3 # num. consumer
 po=$4 # num. producer
 vr=$5 # version of the code
+op=$6 # number of operations
+sa=$7 # sampling interval
 
 cd src
 
@@ -21,7 +18,7 @@ sed "s/topic=test/topic=$topic/g" basic.ini > current.ini
 cd ..
 
 # adjust run.sh
-. run.sh $co $po current.ini
+. run.sh $co $po current.ini $op $sa
 
 # run analysis.py
 rm -rf ./res/$topic
