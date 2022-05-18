@@ -5,7 +5,14 @@ https://docs.confluent.io/clients-confluent-kafka-python/current/overview.html
 
 ### Setup
 ```
-$ source setup.sh 
+$ source setup.sh
+```
+
+### Deleting topic(s)
+
+```sh
+python src/delete_topic.py src/basic.ini --all # or `-a`, will delete all topics
+python src/delete_topic.py src/basic.ini --names a b c # or `-n`, delete topics with name `a`, `b`, `c`
 ```
 
 ### Example run
@@ -17,7 +24,7 @@ $ source setup.sh
 
 See example:
 ```
-$ cd src 
+$ cd src
 
 $ ./produce_driver.py basic.ini 5 10
 {'bootstrap.servers': '129.114.108.39:9092,129.114.109.13:9092,129.114.108.242:9092', 'topic': 'test'}
@@ -75,7 +82,7 @@ Writing metric to /tmp/kafka_run_24605fdc-55f0-4b8a-9120-84f8b384fc33.out
 $ cat /tmp/kafka_run_569ed640-3140-4231-9851-47b5bd92f0ca.out
 timestamp,partition,latest_offset,current_position
 1652281034.934373,1,5261,3760
-1652281035.552668,1,5261,4760% 
+1652281035.552668,1,5261,4760%
 
 $ cat /tmp/kafka_run_24605fdc-55f0-4b8a-9120-84f8b384fc33.out
 timestamp,partition,latest_offset,current_position
@@ -94,5 +101,5 @@ source env/bin/activate
 # adjust parameters inside bmk_multi.sh
 . bmk_multi.sh            # run multiple experiments
 # adjust parameters before line 15 and run
-python3 graph.py          
+python3 graph.py
 ```
