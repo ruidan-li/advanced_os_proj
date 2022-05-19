@@ -8,10 +8,10 @@ import os
 
 
 rfs = [3]
-pas = [16]
-cos = [8]
-pos = [3, 4, 5, 6]
-vr=36
+pas = [4]
+cos = [2]
+pos = [2, 3, 4]
+vr=1000
 
 
 def fetch_experiment_data():

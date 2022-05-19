@@ -10,7 +10,7 @@ def process_one_file(fh):
     time_diff_list, indx_diff_list = [], []
     for line in fh.readlines()[1:]: # remove header
         line = line.split(",")
-        assert len(line) == 5 # send_time,timestamp,partition,latest_offset,current_position
+        assert len(line) == 7 # send_time,timestamp,partition,latest_offset,current_position
         time_diff = float(line[1]) - float(line[0])
         indx_diff = int(line[3]) - int(line[4]) - 1
         # print(time_diff, indx_diff)

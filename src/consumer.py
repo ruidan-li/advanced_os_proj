@@ -1,8 +1,10 @@
+from time import sleep
 from confluent_kafka import Consumer, KafkaError, KafkaException, OFFSET_BEGINNING
 import os
 import arrow
 import json
 import uuid
+import datetime
 
 # conf = {'bootstrap.servers': "host1:9092,host2:9092",
 #         'group.id': "foo",
@@ -14,9 +16,13 @@ class KafkaConsumer(Consumer):
         self._topic = topic
         self._running = False
         self.reset = False
-        self.sample_interval = sample_interval
-        self.lag_metrics = ['send_time,timestamp,partition,latest_offset,current_position']
+        self.lag_metrics = ['send_time,timestamp,partition,latest_offset,current_position,throughput,latency']
         self.metric_file = f'../logs/kafka_run_{uuid.uuid4()}.out'
+
+        self.sampling_time = datetime.timedelta(milliseconds=50)
+        self.last_time = arrow.now()
+        self.processed = 0   # for throughput calculation
+        self.latencies = []       # for latency-i calculation
     
     def reset(self, reset=True):
         self.reset = True
@@ -29,10 +35,9 @@ class KafkaConsumer(Consumer):
 
     def basic_consume(self, timeout, wait=5):
         wait_count = 0
-        sample_count = 0
         try:
             self.subscribe(self._topic)
-
+            self.last_time = arrow.now()
             while self._running:
                 msg = self.poll(timeout=timeout)
                 if msg is None:
@@ -47,14 +52,15 @@ class KafkaConsumer(Consumer):
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:
-                    sample_count += 1
-                    current_partition = self.assignment()
+                    # current_partition = self.assignment()
                     send_time = json.loads(msg.value().decode('utf-8'))['timestamp']
+                    recv_time = arrow.now().timestamp()
 
-                    self.msg_process(msg, current_partition, send_time)
-                    if sample_count >= self.sample_interval:
-                        self.calc_lag(current_partition, send_time)
-                        sample_count = 0
+                    # self.msg_process(msg, current_partition, send_time)
+                    self.update_stats_per_msg(send_time, recv_time)
+                    if (arrow.now() - self.last_time) >= self.sampling_time:
+                        self.update_stats_per_sample(msg, send_time, recv_time)
+
         finally:
             # Close down consumer to commit final offsets.
             self.close()
@@ -79,7 +85,6 @@ class KafkaConsumer(Consumer):
                 p.offset = OFFSET_BEGINNING
             consumer.assign(partitions)
 
-
     def calc_lag(self, curr_p, send_time):
         current_offset = self.position(curr_p)
         for p in current_offset:
@@ -95,6 +100,30 @@ class KafkaConsumer(Consumer):
             else:
                 print(f'Not actively reading from {p.partition}')
                 self.lag_metrics.append(f'{send_time},{arrow.now().timestamp()},{p.partition},-1,-1')
+
+    def update_stats_per_msg(self, send_time, recv_time):
+        self.processed += 1
+        self.latencies.append(recv_time-send_time)
+
+    def update_stats_per_sample(self, msg, send_time, recv_time):
+        time_interval = arrow.now() - self.last_time
+        throughput = self.processed / time_interval.total_seconds()
+        latencies = sum(self.latencies) / len(self.latencies)
+
+        partitions = self.position(self.assignment())
+        for p in partitions:
+            if p.partition == msg.partition():
+                lastest = self.get_watermark_offsets(p, cached=True)[1]
+                log_msg = f'{send_time},{recv_time},{p.partition},{lastest},{p.offset},{throughput},{latencies}'
+                self.lag_metrics.append(log_msg)
+                print(f"*** {os.getpid()} ***", log_msg)
+                break
+        else:
+            raise Exception("no partition match error")
+
+        self.last_time = arrow.now()
+        self.processed = 0
+        self.latencies = []
 
     @staticmethod
     def calc_trip_time(send_time):
