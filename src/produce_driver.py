@@ -11,7 +11,8 @@ import json
 def start_produce(config, max_ct, start_index, step_size, silent_mode):
     # Create Producer instance
     topic = config.pop('topic')
-    producer = KafkaProducer(config, topic=topic)
+    number_of_partitions = config.pop('partition.num')
+    producer = KafkaProducer(config, topic=topic, num_pa=number_of_partitions)
     
     # msg_key = [str(x) for x in range(start_index, max_ct, step_size)]
     msg_key = [str(x) for x in range(max_ct)]
@@ -31,6 +32,8 @@ def start_produce(config, max_ct, start_index, step_size, silent_mode):
     # Block until the messages are sent.
     producer.poll(10)
     producer.flush()
+    
+    print(producer.get_stats())
 
 def do_sleep(i):
     pass

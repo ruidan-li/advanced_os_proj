@@ -14,11 +14,11 @@ topic="topic-rf$rf-pa$pa-co$co-po$po-vr$vr"
 echo $topic
 
 # update ini file (update the topic)
-sed "s/topic=test/topic=$topic/g" basic.ini > current.ini
+sed "s/topic=test/topic=$topic/g; s/partition.num=xx/partition.num=$pa/g" basic.ini > current.ini
 cd ..
 
 # adjust run.sh
-. run.sh $co $po current.ini $op $sa
+. ./run.sh $co $po current.ini $op $sa
 
 # run analysis.py
 rm -rf ./res/$topic

@@ -32,6 +32,7 @@ if __name__ == '__main__':
     config = dict(config_parser['default'])
     config.update(config_parser['producer'])    # for topic
     config.update(config_parser['consumer'])
+    config.pop('partition.num')
     print(config)
     proc = []
     for i in range(args.num_proc):

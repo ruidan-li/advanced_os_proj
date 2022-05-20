@@ -30,6 +30,7 @@ class KafkaConsumer(Consumer):
     def basic_consume(self, timeout, wait=5):
         wait_count = 0
         sample_count = 0
+        total_count = 0
         try:
             self.subscribe(self._topic)
 
@@ -48,6 +49,7 @@ class KafkaConsumer(Consumer):
                         raise KafkaException(msg.error())
                 else:
                     sample_count += 1
+                    total_count += 1
                     current_partition = self.assignment()
                     send_time = json.loads(msg.value().decode('utf-8'))['timestamp']
 
@@ -59,16 +61,16 @@ class KafkaConsumer(Consumer):
             # Close down consumer to commit final offsets.
             self.close()
             # Dump metrics to file
-            print(f'Writing metric to {self.metric_file}')
             with open(self.metric_file, 'w') as fp:
                 fp.write('\n'.join(self.lag_metrics))
+            print(f'Writing metric to {self.metric_file}. metric length {len(self.lag_metrics)}. total msg count {total_count}')
 
     def msg_process(self, msg, curr_p, send_time):
         print("*** {pid} *** topic {topic} (partitions: {partition}): key = {key:12} value = {value:12} ({delay} sec used)".format(
                     pid=os.getpid(),
                     topic=msg.topic(),
                     partition=[p.partition for p in curr_p],
-                    key=msg.key().decode('utf-8'),
+                    key=msg.key().decode('utf-8') if msg.key() else '',
                     value=send_time,
                     delay=self.calc_trip_time(send_time)))
 

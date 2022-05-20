@@ -38,7 +38,7 @@ def convert_multi_list_to_avg_list(multi_list):
 time_diff_multi_list, indx_diff_multi_list = [], [] # each entry is a time_diff_list/indx_diff_list
 for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs")):        
     for filename in files:
-        print(filename)
+        # print(filename)
         with open(join(dirname, filename)) as f:
             time_diff_list, indx_diff_list = process_one_file(f)
             # print(len(time_diff_list), len(indx_diff_list))
