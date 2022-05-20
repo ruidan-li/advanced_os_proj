@@ -103,3 +103,49 @@ source env/bin/activate
 # adjust parameters before line 15 and run
 python3 graph.py
 ```
+
+### Update 05/20/22
+Confirmed that the partitioner issue is resolved! src/tmp.out contains the output from the consumers.
+The number is the number of records consumed by each consumer.
+Example run:
+```
+================================
+Common config for the two runs below:
+
+rf=3
+sa=100
+pa=16
+co=8
+================================
+test run 1: op=250000, po=4
+$ . ./bmk_multi.sh > tmp
+[5] 48575
+[5]  + 48575 done       ./consume_driver.py $3 $1 $5 > tmp.out
+
+$ cat src/tmp.out | grep Writing | grep -Eo '[0-9]+$' | awk '{s+=$1} END {print s}'
+999992
+$ cat src/tmp.out | grep Writing | grep -Eo '[0-9]+$'
+125000
+125000
+125000
+125000
+124992
+125000
+125000
+125000
+$
+================================
+test run 2: op=120000, po=10
+$ cat src/tmp.out | grep Writing | grep -Eo '[0-9]+$' | awk '{s+=$1} END {print s}'
+1199990
+$ cat src/tmp.out | grep Writing | grep -Eo '[0-9]+$'
+150000
+150000
+149990
+150000
+150000
+150000
+150000
+150000
+$       
+```
