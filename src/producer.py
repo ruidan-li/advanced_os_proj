@@ -18,6 +18,8 @@ class KafkaProducer(Producer):
             self._produce_track[int(key) % self._num_pa] += 1
         except KafkaException as e:
             print(f'producing to {key % self._num_pa}. exception: {e}')
+        except BufferError:
+            self.flush()
 
     def get_stats(self):
         return self._produce_track

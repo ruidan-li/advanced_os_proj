@@ -9,13 +9,13 @@
 
 rf=3
 vr=64
-op=50000
+op=250000
 sa=100
 
 partition() {
     pa=16
     co=8
-    po=3
+    po=4
     echo     $rf $pa $co $po $vr $op $sa
     . ./bmk.sh $rf $pa $co $po $vr $op $sa
 }
