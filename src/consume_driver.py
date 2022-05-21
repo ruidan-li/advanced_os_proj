@@ -13,7 +13,7 @@ def start_consume(config, sample_interval):
     consumer = KafkaConsumer(config, topic=[config.pop('topic')], sample_interval=sample_interval)
 
     consumer.start()
-    consumer.basic_consume(timeout)
+    consumer.basic_consume(timeout, 60)
 
 
 
@@ -32,6 +32,7 @@ if __name__ == '__main__':
     config = dict(config_parser['default'])
     config.update(config_parser['producer'])    # for topic
     config.update(config_parser['consumer'])
+    config.pop('partition.num')
     print(config)
     proc = []
     for i in range(args.num_proc):

@@ -5,7 +5,14 @@ https://docs.confluent.io/clients-confluent-kafka-python/current/overview.html
 
 ### Setup
 ```
-$ source setup.sh 
+$ source setup.sh
+```
+
+### Deleting topic(s)
+
+```sh
+python src/delete_topic.py src/basic.ini --all # or `-a`, will delete all topics
+python src/delete_topic.py src/basic.ini --names a b c # or `-n`, delete topics with name `a`, `b`, `c`
 ```
 
 ### Example run
@@ -17,7 +24,7 @@ $ source setup.sh
 
 See example:
 ```
-$ cd src 
+$ cd src
 
 $ ./produce_driver.py basic.ini 5 10
 {'bootstrap.servers': '129.114.108.39:9092,129.114.109.13:9092,129.114.108.242:9092', 'topic': 'test'}
@@ -75,11 +82,70 @@ Writing metric to /tmp/kafka_run_24605fdc-55f0-4b8a-9120-84f8b384fc33.out
 $ cat /tmp/kafka_run_569ed640-3140-4231-9851-47b5bd92f0ca.out
 timestamp,partition,latest_offset,current_position
 1652281034.934373,1,5261,3760
-1652281035.552668,1,5261,4760% 
+1652281035.552668,1,5261,4760%
 
 $ cat /tmp/kafka_run_24605fdc-55f0-4b8a-9120-84f8b384fc33.out
 timestamp,partition,latest_offset,current_position
 1652281034.934477,0,5207,3710
 1652281035.552669,0,5207,4710%
 $
+```
+
+### Update 05/15/22
+in the advance_os_proj folder, run the following to perform benchmarking and to graph
+```
+# adjust parameters in src/basic.ini besides topic;
+# these configs will be copied to current.ini by the benchmarking code with the topic adjusted
+# go back to the project root folder
+source env/bin/activate
+# adjust parameters inside bmk_multi.sh
+. bmk_multi.sh            # run multiple experiments
+# adjust parameters before line 15 and run
+python3 graph.py
+```
+
+### Update 05/20/22
+Confirmed that the partitioner issue is resolved! src/tmp.out contains the output from the consumers.
+The number is the number of records consumed by each consumer.
+Example run:
+```
+================================
+Common config for the two runs below:
+
+rf=3
+sa=100
+pa=16
+co=8
+================================
+test run 1: op=250000, po=4
+$ . ./bmk_multi.sh > tmp
+[5] 48575
+[5]  + 48575 done       ./consume_driver.py $3 $1 $5 > tmp.out
+
+$ cat src/tmp.out | grep Writing | grep -Eo '[0-9]+$' | awk '{s+=$1} END {print s}'
+999992
+$ cat src/tmp.out | grep Writing | grep -Eo '[0-9]+$'
+125000
+125000
+125000
+125000
+124992
+125000
+125000
+125000
+$
+================================
+test run 2: op=120000, po=10
+$ cat src/tmp.out | grep Writing | grep -Eo '[0-9]+$' | awk '{s+=$1} END {print s}'
+1199990
+$ cat src/tmp.out | grep Writing | grep -Eo '[0-9]+$'
+150000
+150000
+149990
+150000
+150000
+150000
+150000
+150000
+$       
 ```

@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser, FileType
 from configparser import ConfigParser
+from time import sleep
 from producer import KafkaProducer
 from multiprocessing import Process
 import arrow
@@ -10,22 +11,33 @@ import json
 def start_produce(config, max_ct, start_index, step_size, silent_mode):
     # Create Producer instance
     topic = config.pop('topic')
-    producer = KafkaProducer(config, topic=topic)
+    number_of_partitions = config.pop('partition.num')
+    producer = KafkaProducer(config, topic=topic, num_pa=number_of_partitions)
     
-    msg_key = [str(x) for x in range(start_index, max_ct, step_size)]
-    msg_val = [json.dumps({'value': f'v_{x}', 'timestamp': arrow.now().timestamp()}) for x in msg_key]
+    # msg_key = [str(x) for x in range(start_index, max_ct, step_size)]
+    msg_key = [str(x) for x in range(max_ct)]
+    print("num of keys of this producer", len(msg_key))
 
     if not silent_mode:
         for i in range(len(msg_key)):
-            producer.perform_produce(msg_key[i], msg_val[i])
+            do_sleep(i)
+            msg_val = json.dumps({'value': f'v_{msg_key[i]}', 'timestamp': arrow.now().timestamp()}) 
+            producer.perform_produce(msg_key[i], msg_val)
     else:
         for i in range(len(msg_key)):
-            producer.produce(topic, key=msg_key[i], value=msg_val[i], callback=None)
+            do_sleep(i)
+            msg_val = json.dumps({'value': f'v_{msg_key[i]}', 'timestamp': arrow.now().timestamp()}) 
+            producer.perform_produce(msg_key[i], msg_val)
 
     # Block until the messages are sent.
     producer.poll(10)
     producer.flush()
+    
+    print(producer.get_stats())
 
+def do_sleep(i):
+    pass
+    sleep(0.000025)
 
 if __name__ == '__main__':
     # Parse the command line.

@@ -130,3 +130,10 @@ dmypy.json
 
 # tmp output
 src/*.out
+*.out
+logs/*
+.DS_Store
+.vscode
+tmp/*
+tmp
+rd-*
