@@ -9,10 +9,10 @@ import pickle
 
 
 rfs = [3]
-pas = [2]
-cos = [2]
-pos = [2, 3, 4]
-vr=1001
+pas = [16]
+cos = [8]
+pos = [10]
+vr=64
 
 def fetch_experiment_data():
     experiments= []
@@ -60,6 +60,7 @@ def plot_experiments(experiments, metric="avg"):
             axs[3,2].plot(*emit_x_and_y(res_obj[1][0][3]), label=f"{param}") # lp99
 
 
+    # line 22, 27 of consumer.py
     sampling_ival = 500 # msgs
     sampling_time = 50 # ms
 
