@@ -1,5 +1,6 @@
 from confluent_kafka import Producer, KafkaException
 import socket
+import random
 
 # conf = {'bootstrap.servers': "host1:9092,host2:9092",
 #         'client.id': socket.gethostname()}
@@ -32,9 +33,10 @@ class KafkaProducer(Producer):
         if err:
             print('ERROR: Message failed delivery: {}'.format(err))
         else:
-            if msg.key():
-                print("Produced event to topic {topic}: key = {key:12} value = {value:12}".format(
-                    topic=msg.topic(), key=msg.key().decode('utf-8'), value=msg.value().decode('utf-8')))
-            else:
-                print("Produced event to topic {topic}: key = None value = {value:12}".format(
-                    topic=msg.topic(), value=msg.value().decode('utf-8')))
+            if random.randint(0, 100) == 1:
+                if msg.key():
+                    print("Produced event to topic {topic}: key = {key:12} value = {value:12}".format(
+                        topic=msg.topic(), key=msg.key().decode('utf-8'), value=msg.value().decode('utf-8')))
+                else:
+                    print("Produced event to topic {topic}: key = None value = {value:12}".format(
+                        topic=msg.topic(), value=msg.value().decode('utf-8')))
