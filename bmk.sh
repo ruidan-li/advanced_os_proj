@@ -23,4 +23,4 @@ cd ..
 # run analysis.py
 rm -rf ./res/$topic
 mkdir -p ./res/$topic
-python3 analysis.py ./res/$topic
+python3 analysis2.py ./res/$topic

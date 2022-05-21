@@ -5,7 +5,7 @@
 # po=$4 # num. producer
 # vr=$5 # version of the code
 # op=$6 number of operations
-# sa=$7 sampling interval
+# sa=$7 sampling interval (deprecated, use line 22, 27 of consumer.py instead)
 
 rf=3
 vr=64

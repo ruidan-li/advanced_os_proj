@@ -5,8 +5,8 @@
 # $5 sampling interval
 
 source env/bin/activate
-rm -rf logs/*.out
-mkdir -p logs
+rm -rf logs logs_cntr logs_time *.txt 
+mkdir -p logs logs_cntr logs_time
 cd src
 ./consume_driver.py $3 $1 $5 > tmp.out &
 ./produce_driver.py $3 $2 $4 -s

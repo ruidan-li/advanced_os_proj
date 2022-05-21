@@ -8,15 +8,21 @@ import os
 """
 def process_one_file(fh):
     time_diff_list, indx_diff_list = [], []
+    tput_list, lats_list = [], []
+
     for line in fh.readlines()[1:]: # remove header
         line = line.split(",")
-        assert len(line) == 5 # send_time,timestamp,partition,latest_offset,current_position
+        assert len(line) == 7 # send_time,timestamp,partition,latest_offset,current_position
         time_diff = float(line[1]) - float(line[0])
-        indx_diff = int(line[3]) - int(line[4]) - 1
+        indx_diff = int(line[3]) - int(line[4])
         # print(time_diff, indx_diff)
         time_diff_list.append(time_diff)
         indx_diff_list.append(indx_diff)
-    return time_diff_list, indx_diff_list
+        tput_list.append(float(line[5]))
+        lats_list.append(float(line[6]))
+
+        
+    return time_diff_list, indx_diff_list, tput_list, lats_list
 
 """
     aggregate all client's data
@@ -36,23 +42,35 @@ def convert_multi_list_to_avg_list(multi_list):
 
 
 time_diff_multi_list, indx_diff_multi_list = [], [] # each entry is a time_diff_list/indx_diff_list
+tput_multi_list, lats_multi_list = [], []
 for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs")):        
     for filename in files:
         # print(filename)
         with open(join(dirname, filename)) as f:
-            time_diff_list, indx_diff_list = process_one_file(f)
+            time_diff_list, indx_diff_list, tput_list, lats_list = process_one_file(f)
             # print(len(time_diff_list), len(indx_diff_list))
             time_diff_multi_list.append(time_diff_list)
             indx_diff_multi_list.append(indx_diff_list)
+            tput_multi_list.append(tput_list)
+            lats_multi_list.append(lats_list)
 
 
 time_diff_avg_list = convert_multi_list_to_avg_list(time_diff_multi_list)
 indx_diff_avg_list = convert_multi_list_to_avg_list(indx_diff_multi_list)
+tput_avg_list = convert_multi_list_to_avg_list(tput_multi_list)
+lats_avg_list = convert_multi_list_to_avg_list(lats_multi_list)
 
-with open(f"{sys.argv[1]}/diff_time.txt", "w") as f:
-    for i in time_diff_avg_list:
-        f.write(f"{i}\n")
+# diff_time
+# diff_indx
+# tput
+# lats
 
-with open(f"{sys.argv[1]}/diff_indx.txt", "w") as f:
-    for i in indx_diff_avg_list:
-        f.write(f"{i}\n")
+def write_to_file(fname, lst):
+    with open(f"{sys.argv[1]}/{fname}.txt", "w") as f:
+        for i in lst:
+            f.write(f"{i}\n")
+
+write_to_file("diff_time", time_diff_avg_list)
+write_to_file("diff_indx", indx_diff_avg_list)
+write_to_file("tput", tput_avg_list)
+write_to_file("lats", lats_avg_list)
