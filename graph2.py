@@ -17,11 +17,11 @@ vrs=[64, 65]
 def fetch_experiment_data():
     experiments= []
 
-    for rf in rfs:
-        for pa in pas:
-            for co in cos:
-                for po in pos:
-                    for vr in vrs:
+    for vr in vrs:
+        for rf in rfs:
+            for pa in pas:
+                for co in cos:
+                    for po in pos:
                         param = f"rf{rf}-pa{pa}-co{co}-po{po}-vr{vr}"
                         param_short = f"{rf};{pa};{co};{po};{vr}"
                         folder = f"topic-{param}"
