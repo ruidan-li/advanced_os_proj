@@ -6,7 +6,11 @@ partition.num=2
 # group.max.session.timeout.ms=?
 
 [producer]
-topic=topic-rf3-pa2-co2-po2-vr83
+<<<<<<< HEAD
+topic=topic-rf3-pa2-co2-po2-vr65
+=======
+topic=topic-rf3-pa2-co2-po2-vr1025
+>>>>>>> origin/db-haochen
 ; partitioner=murmur2_random
 
 [consumer]

@@ -8,8 +8,8 @@
 # sa=$7 sampling interval (deprecated, use line 22, 27 of consumer.py instead)
 
 rf=3
-vr=1025
-op=750000
+vr=83
+op=500000
 sa=100
 
 partition() {

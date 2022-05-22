@@ -12,7 +12,7 @@ rfs = [3]
 pas = [2]
 cos = [2]
 pos = [2]
-vrs = [1021, 1022, 1023, 1024, 1025]
+vrs = [80, 81, 82, 83]
 
 def fetch_experiment_data():
     experiments= []
