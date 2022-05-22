@@ -8,16 +8,16 @@
 # sa=$7 sampling interval (deprecated, use line 22, 27 of consumer.py instead)
 
 rf=3
-vr=65
-op=1000000
+vr=1025
+op=750000
 sa=100
 
 partition() {
-    pa=2
-    co=2
-    po=2
-    echo     $rf $pa $co $po $vr $op $sa
+    pa=$1
+    co=$2
+    po=$3
+    echo       $rf $pa $co $po $vr $op $sa
     . ./bmk.sh $rf $pa $co $po $vr $op $sa
 }
 
-partition
+partition 2 2 2
