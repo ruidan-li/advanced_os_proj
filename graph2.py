@@ -114,7 +114,12 @@ def plot_experiments(experiments, metric="avg"):
     for rs in axs:
         for c in rs:
             c.legend()
-    plt.show()
-
+    # plt.show()
+    title = '_'.join(['-'.join(map(str, rfs)),
+            '-'.join(map(str, pas)),
+            '-'.join(map(str, cos)),
+            '-'.join(map(str, pos)),
+            '-'.join(map(str, vrs))])
+    plt.savefig(f'./fig/{title}.png', bbox_inches='tight')
 
 plot_experiments(fetch_experiment_data())
