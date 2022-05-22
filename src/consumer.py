@@ -1,4 +1,4 @@
-from time import sleep
+import time
 from confluent_kafka import Consumer, KafkaError, KafkaException, OFFSET_BEGINNING
 import os
 import arrow
@@ -19,7 +19,7 @@ class KafkaConsumer(Consumer):
         self._running = False
         self.reset = False
 
-        self.sampling_ival = 5000  # msg-based sampling
+        self.sampling_ival = sample_interval  # msg-based sampling
         self.sampling_cntr = 0    # msg-based sampling
         self.time_diff = defaultdict(lambda:[])       # each element belongs to a partition
         self.indx_diff = defaultdict(lambda:[])       # each element belongs to a partition
@@ -43,13 +43,22 @@ class KafkaConsumer(Consumer):
     def stop(self):
         self._running = False
 
-    def basic_consume(self, timeout, wait=5):
+    def basic_consume(self, timeout, wait=30,
+                      put_to_sleep=False,
+                      sleep_delay_sec=0,
+                      sleep_duration=0):
+        if put_to_sleep:
+            start = time.time()
         wait_count = 0
         total_count = 0
         try:
             self.subscribe(self._topic)
             self.last_time = arrow.now()
             while self._running:
+                if put_to_sleep and (time.time() - start) >= sleep_delay_sec:
+                    print(f"*** {os.getpid()} *** Sleep for {sleep_duration} sec")
+                    time.sleep(sleep_duration)
+                    put_to_sleep = False    # only sleep once
                 msg = self.poll(timeout=timeout)
                 if msg is None:
                     wait_count += 1
@@ -60,6 +69,9 @@ class KafkaConsumer(Consumer):
                         # End of partition event
                         print('%% %s [%d] reached end at offset %d\n' %
                                         (msg.topic(), msg.partition(), msg.offset()))
+                    elif msg.error().code() == KafkaError._MAX_POLL_EXCEEDED:
+                        print('%% %s [%d] max poll exceeded triggered\n' %
+                                        (msg.topic(), msg.partition()))
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:

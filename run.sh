@@ -8,7 +8,7 @@ source env/bin/activate
 rm -rf logs logs_cntr logs_time
 mkdir -p logs logs_cntr logs_time
 cd src
-./consume_driver.py $3 $1 $5 > tmp.out &
+./consume_driver.py $3 $1 $5 1 180 360 > tmp.out &
 sleep 2
 ./produce_driver.py $3 $2 $4 -s
 cd ..
