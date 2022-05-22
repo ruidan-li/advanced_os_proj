@@ -19,12 +19,12 @@ class KafkaConsumer(Consumer):
         self._running = False
         self.reset = False
 
-        self.sampling_ival = 500  # msg-based sampling
+        self.sampling_ival = 5000  # msg-based sampling
         self.sampling_cntr = 0    # msg-based sampling
         self.time_diff = defaultdict(lambda:[])       # each element belongs to a partition
         self.indx_diff = defaultdict(lambda:[])       # each element belongs to a partition
 
-        self.sampling_time = datetime.timedelta(milliseconds=50) # time-based sampling
+        self.sampling_time = datetime.timedelta(milliseconds=500) # time-based sampling
         self.last_time = arrow.now()                             # time-based sampling
         self.processed = defaultdict(lambda:0)     # each element belongs to a partition
         self.latencies = defaultdict(lambda:[])    # each element belongs to a partition
@@ -101,6 +101,7 @@ class KafkaConsumer(Consumer):
         # processed and latencies
         self.processed[msg.partition()] += 1           # processed
         self.latencies[msg.partition()].append(delta)  # latencies
+        # sleep(0.00003)
 
     def sampling_cntr_interrupt(self):
         # time_diff =  {"all": [avg, 50, 90, 99], "1": [avg, 50, 90, 99], "2": [avg, 50, 90, 99]}
