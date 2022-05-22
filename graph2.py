@@ -9,27 +9,28 @@ import pickle
 
 
 rfs = [3]
-pas = [16]
-cos = [8]
-pos = [10]
-vr=64
+pas = [2]
+cos = [2]
+pos = [2]
+vrs = [1021, 1022, 1023, 1024, 1025]
 
 def fetch_experiment_data():
     experiments= []
 
-    for rf in rfs:
-        for pa in pas:
-            for co in cos:
-                for po in pos:
-                    param = f"rf{rf}-pa{pa}-co{co}-po{po}-vr{vr}"
-                    param_short = f"{rf};{pa};{co};{po};{vr}"
-                    folder = f"topic-{param}"
-                    fpath = join(os.getcwd(), f"res/{folder}/res_obj.pickle")
-                    fh = open(fpath, 'rb') 
-                    res_obj = pickle.load(fh)
-                    experiments.append((param_short, res_obj))
+    for vr in vrs:
+        for rf in rfs:
+            for pa in pas:
+                for co in cos:
+                    for po in pos:
+                        param = f"rf{rf}-pa{pa}-co{co}-po{po}-vr{vr}"
+                        param_short = f"{rf};{pa};{co};{po};{vr}"
+                        folder = f"topic-{param}"
+                        fpath = join(os.getcwd(), f"res/{folder}/res_obj.pickle")
+                        fh = open(fpath, 'rb') 
+                        res_obj = pickle.load(fh)
+                        experiments.append((param_short, res_obj))
     
-    print(len(experiments))
+    print("num of experiments loaded:", len(experiments))
     return experiments
 
 def emit_x_and_y(data):
@@ -61,8 +62,8 @@ def plot_experiments(experiments, metric="avg"):
 
 
     # line 22, 27 of consumer.py
-    sampling_ival = 500 # msgs
-    sampling_time = 50 # ms
+    sampling_ival = 5000 # msgs
+    sampling_time = 500 # ms
 
     axs[0,0].set_title(f"average time diff")
     axs[0,0].set(xlabel=f"# of passed sampling interval ({sampling_ival} msgs)", ylabel="average latencies (in sec)")
@@ -113,7 +114,12 @@ def plot_experiments(experiments, metric="avg"):
     for rs in axs:
         for c in rs:
             c.legend()
-    plt.show()
-
+    # plt.show()
+    title = '_'.join(['-'.join(map(str, rfs)),
+            '-'.join(map(str, pas)),
+            '-'.join(map(str, cos)),
+            '-'.join(map(str, pos)),
+            '-'.join(map(str, vrs))])
+    plt.savefig(f'./fig/{title}.png', bbox_inches='tight')
 
 plot_experiments(fetch_experiment_data())

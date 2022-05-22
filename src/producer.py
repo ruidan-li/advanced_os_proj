@@ -33,7 +33,7 @@ class KafkaProducer(Producer):
         if err:
             print('ERROR: Message failed delivery: {}'.format(err))
         else:
-            if random.randint(0, 100) == 1:
+            if random.randint(0, 100) == -1: # -1: no log to ttl, 0: 1% of the log
                 if msg.key():
                     print("Produced event to topic {topic}: key = {key:12} value = {value:12}".format(
                         topic=msg.topic(), key=msg.key().decode('utf-8'), value=msg.value().decode('utf-8')))

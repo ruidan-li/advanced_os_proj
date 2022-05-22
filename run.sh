@@ -9,6 +9,7 @@ rm -rf logs logs_cntr logs_time *.txt
 mkdir -p logs logs_cntr logs_time
 cd src
 ./consume_driver.py $3 $1 $5 > tmp.out &
+sleep 2
 ./produce_driver.py $3 $2 $4 -s
 cd ..
 wait
