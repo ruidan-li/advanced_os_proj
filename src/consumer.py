@@ -45,6 +45,7 @@ class KafkaConsumer(Consumer):
 
     def basic_consume(self, timeout, wait=5):
         wait_count = 0
+        total_count = 0
         try:
             self.subscribe(self._topic)
             self.last_time = arrow.now()
@@ -62,6 +63,7 @@ class KafkaConsumer(Consumer):
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:
+                    total_count += 1
                     self.handle_msg(msg)
                     if self.sampling_cntr == self.sampling_ival:
                         self.sampling_cntr_interrupt()
@@ -74,7 +76,7 @@ class KafkaConsumer(Consumer):
             # Close down consumer to commit final offsets.
             self.close()
             # Dump metrics to file
-            print(f'Writing metric to {self.cntr_log_file}, {self.time_log_file}')
+            print(f'Writing metric to {self.cntr_log_file}, {self.time_log_file}. total msg count {total_count}')
             with open(self.cntr_log_file, 'w') as fp:
                 fp.write('\n'.join(self.cntr_log))
             with open(self.time_log_file, 'w') as fp:
