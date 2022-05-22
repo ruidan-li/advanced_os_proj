@@ -24,8 +24,6 @@ config_parser = ConfigParser()
 config_parser.read_file(args.config_file)
 config = dict(config_parser['default'])
 config.update(config_parser['producer'])
-print(args.rf)
-
 
 tp = f"topic-rf{args.rf}-pa{args.pa}-co{args.co}-po{args.po}-vr{args.vr}"
 a = AdminClient({'bootstrap.servers': config["bootstrap.servers"]})
