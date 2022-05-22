@@ -63,6 +63,8 @@ class KafkaConsumer(Consumer):
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:
+                    # reset the wait count
+                    wait_count = 0
                     total_count += 1
                     self.handle_msg(msg)
                     if self.sampling_cntr == self.sampling_ival:

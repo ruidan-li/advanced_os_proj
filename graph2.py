@@ -9,10 +9,10 @@ import pickle
 
 
 rfs = [3]
-pas = [16]
-cos = [8]
-pos = [10]
-vr=64
+pas = [2]
+cos = [2]
+pos = [2]
+vrs=[64, 65]
 
 def fetch_experiment_data():
     experiments= []
@@ -21,13 +21,14 @@ def fetch_experiment_data():
         for pa in pas:
             for co in cos:
                 for po in pos:
-                    param = f"rf{rf}-pa{pa}-co{co}-po{po}-vr{vr}"
-                    param_short = f"{rf};{pa};{co};{po};{vr}"
-                    folder = f"topic-{param}"
-                    fpath = join(os.getcwd(), f"res/{folder}/res_obj.pickle")
-                    fh = open(fpath, 'rb') 
-                    res_obj = pickle.load(fh)
-                    experiments.append((param_short, res_obj))
+                    for vr in vrs:
+                        param = f"rf{rf}-pa{pa}-co{co}-po{po}-vr{vr}"
+                        param_short = f"{rf};{pa};{co};{po};{vr}"
+                        folder = f"topic-{param}"
+                        fpath = join(os.getcwd(), f"res/{folder}/res_obj.pickle")
+                        fh = open(fpath, 'rb') 
+                        res_obj = pickle.load(fh)
+                        experiments.append((param_short, res_obj))
     
     print(len(experiments))
     return experiments
