@@ -24,7 +24,7 @@ class KafkaConsumer(Consumer):
         self.time_diff = defaultdict(lambda:[])       # each element belongs to a partition
         self.indx_diff = defaultdict(lambda:[])       # each element belongs to a partition
 
-        self.sampling_time = datetime.timedelta(milliseconds=500) # time-based sampling
+        self.sampling_time = datetime.timedelta(milliseconds=1000) # time-based sampling
         self.last_time = arrow.now()                             # time-based sampling
         self.processed = defaultdict(lambda:0)     # each element belongs to a partition
         self.latencies = defaultdict(lambda:[])    # each element belongs to a partition
@@ -57,7 +57,8 @@ class KafkaConsumer(Consumer):
             while self._running:
                 if put_to_sleep and (time.time() - start) >= sleep_delay_sec:
                     print(f"*** {os.getpid()} *** Sleep for {sleep_duration} sec")
-                    time.sleep(sleep_duration)
+                    for _ in range(sleep_duration):
+                        self.sleep()
                     put_to_sleep = False    # only sleep once
                 msg = self.poll(timeout=timeout)
                 if msg is None:
@@ -117,7 +118,7 @@ class KafkaConsumer(Consumer):
         # processed and latencies
         self.processed[msg.partition()] += 1           # processed
         self.latencies[msg.partition()].append(delta)  # latencies
-        # sleep(0.00003)
+        time.sleep(0.00003)
 
     def sampling_cntr_interrupt(self):
         # time_diff =  {"all": [avg, 50, 90, 99], "1": [avg, 50, 90, 99], "2": [avg, 50, 90, 99]}
@@ -143,7 +144,7 @@ class KafkaConsumer(Consumer):
 
         log_line = json.dumps({"time_diff": time_diff_line, "idex_diff": idex_diff_line})
         self.cntr_log.append(log_line)
-        print(f"*** {os.getpid()} *** ", log_line)
+        # print(f"*** {os.getpid()} *** ", log_line)
 
         self.time_diff = defaultdict(lambda:[])   
         self.indx_diff = defaultdict(lambda:[])
@@ -169,7 +170,7 @@ class KafkaConsumer(Consumer):
 
         log_line = json.dumps({"processed": processed_line, "latencies": latencies_line})
         self.time_log.append(log_line)
-        print(f"*** {os.getpid()} *** ", log_line)
+        print(f"*** {os.getpid()} *** ", processed_line["all"], latencies_line["all"])
 
         self.processed = defaultdict(lambda:0)
         self.latencies = defaultdict(lambda:[])
@@ -184,11 +185,18 @@ class KafkaConsumer(Consumer):
 
     @staticmethod
     def calculate_average(lst, rd=3):
-        return round(sum(lst) / len(lst), 3)
+        try:
+            return round(sum(lst) / len(lst), 3)
+        except ZeroDivisionError:
+            return 0
+
 
     @staticmethod
     def calculate_percent(lst, p): # lst: sorted, # p = 0.5, 0.9, 0.99...
-        return lst[int(p*float(len(lst)))]
+        try:
+            return lst[int(p*float(len(lst)))]
+        except IndexError:
+            return 0 
 
     def msg_process(self, msg, curr_p, send_time):
         print("*** {pid} *** topic {topic} (partitions: {partition}): key = {key:12} value = {value:12} ({delay} sec used)".format(
@@ -249,3 +257,9 @@ class KafkaConsumer(Consumer):
     @staticmethod
     def calc_trip_time(send_time):
         return arrow.now().timestamp() - send_time
+
+    def sleep(self):
+        time.sleep(1)
+        if (arrow.now() - self.last_time) >= self.sampling_time:
+            self.sampling_time_interrupt()
+            self.last_time = arrow.now()

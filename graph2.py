@@ -9,10 +9,10 @@ import pickle
 
 
 rfs = [3]
-pas = [2]
-cos = [2]
-pos = [2]
-vrs = [91]
+pas = [4]
+cos = [4]
+pos = [4]
+vrs = [226]
 
 def fetch_experiment_data():
     experiments= []
@@ -63,7 +63,7 @@ def plot_experiments(experiments, metric="avg"):
 
     # line 22, 27 of consumer.py
     sampling_ival = 5000 # msgs
-    sampling_time = 500 # ms
+    sampling_time = 1000 # ms
 
     axs[0,0].set_title(f"average time diff")
     axs[0,0].set(xlabel=f"# of passed sampling interval ({sampling_ival} msgs)", ylabel="average latencies (in sec)")
@@ -120,6 +120,7 @@ def plot_experiments(experiments, metric="avg"):
             '-'.join(map(str, cos)),
             '-'.join(map(str, pos)),
             '-'.join(map(str, vrs))])
+    print('./fig/{title}.png')
     plt.savefig(f'./fig/{title}.png', bbox_inches='tight')
 
 plot_experiments(fetch_experiment_data())

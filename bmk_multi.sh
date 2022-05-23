@@ -8,16 +8,18 @@
 # sa=$7 sampling interval (deprecated, use line 22, 27 of consumer.py instead)
 
 rf=3
-vr=91
-op=5000000
+vr=226
+op=10000000
 sa=100
+ps=0.00006               # producer sleep time, no need to pass as an argument.
+echo $ps > sleeptime.txt # when a producer runs, it checks this file every 5 secs
 
 partition() {
     pa=$1
     co=$2
     po=$3
-    echo       $rf $pa $co $po $vr $op $sa
+    echo       $rf $pa $co $po $vr $op $sa $ps
     . ./bmk.sh $rf $pa $co $po $vr $op $sa
 }
 
-partition 2 2 2
+partition 4 4 4
