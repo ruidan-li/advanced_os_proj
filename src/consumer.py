@@ -62,10 +62,12 @@ class KafkaConsumer(Consumer):
                     for _ in range(sleep_duration):
                         self.sleep()
                     put_to_sleep = False    # only sleep once
+                    print(f"*** {os.getpid()} *** wake up at {arrow.utcnow()}")
                 msg = self.poll(timeout=timeout)
                 if msg is None:
                     wait_count += 1
                     if wait_count > wait:
+                        print(f"*** {os.getpid()} *** stop at {arrow.utcnow()}")
                         self.stop()
                 elif msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
