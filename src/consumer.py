@@ -81,7 +81,7 @@ class KafkaConsumer(Consumer):
                     # reset the wait count
                     wait_count = 0
                     total_count += 1
-                    new_partition = self.handle_msg(msg)
+                    new_partition = self.handle_msg(msg, total_count)
                     if new_partition:
                         print(f'New partition detected after processing {total_count} msg.')
                     if self.sampling_cntr == self.sampling_ival:
@@ -101,7 +101,7 @@ class KafkaConsumer(Consumer):
             with open(self.time_log_file, 'w') as fp:
                 fp.write('\n'.join(self.time_log))
 
-    def handle_msg(self, msg):
+    def handle_msg(self, msg, curr_ct):
         self.sampling_cntr += 1
         send_time = json.loads(msg.value().decode('utf-8'))['timestamp']
         recv_time = arrow.now().timestamp()
@@ -126,9 +126,11 @@ class KafkaConsumer(Consumer):
         # check if the msg belongs to a new partition
         if msg.partition() in self.partition_hist:
             return False
-        else:
+        elif curr_ct > 1000:    # only start tracking after the consumption is stablized
             self.partition_hist.append(msg.partition())
             return True
+        else:
+            return False
 
     def sampling_cntr_interrupt(self):
         # time_diff =  {"all": [avg, 50, 90, 99], "1": [avg, 50, 90, 99], "2": [avg, 50, 90, 99]}
