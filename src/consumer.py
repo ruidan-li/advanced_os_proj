@@ -33,6 +33,8 @@ class KafkaConsumer(Consumer):
         self.time_log = []
         self.cntr_log_file = f'../logs_cntr/kafka_run_{uuid.uuid4()}.out'
         self.time_log_file = f'../logs_time/kafka_run_{uuid.uuid4()}.out'
+        # for tracking if new partitions kick in
+        self.partition_hist = []
     
     def reset(self, reset=True):
         self.reset = True
@@ -79,7 +81,9 @@ class KafkaConsumer(Consumer):
                     # reset the wait count
                     wait_count = 0
                     total_count += 1
-                    self.handle_msg(msg)
+                    new_partition = self.handle_msg(msg)
+                    if new_partition:
+                        print(f'New partition detected after processing {total_count} msg.')
                     if self.sampling_cntr == self.sampling_ival:
                         self.sampling_cntr_interrupt()
                         self.sampling_cntr = 0
@@ -119,6 +123,12 @@ class KafkaConsumer(Consumer):
         self.processed[msg.partition()] += 1           # processed
         self.latencies[msg.partition()].append(delta)  # latencies
         time.sleep(0.00003)
+        # check if the msg belongs to a new partition
+        if msg.partition() in self.partition_hist:
+            return False
+        else:
+            self.partition_hist.append(msg.partition())
+            return True
 
     def sampling_cntr_interrupt(self):
         # time_diff =  {"all": [avg, 50, 90, 99], "1": [avg, 50, 90, 99], "2": [avg, 50, 90, 99]}
