@@ -25,6 +25,7 @@ class KafkaConsumer(Consumer):
         self.indx_diff = defaultdict(lambda:[])       # each element belongs to a partition
 
         self.sampling_time = datetime.timedelta(milliseconds=500) # time-based sampling
+        self.sampling_time_cntr = 0
         self.last_time = arrow.now()                             # time-based sampling
         self.processed = defaultdict(lambda:0)     # each element belongs to a partition
         self.latencies = defaultdict(lambda:[])    # each element belongs to a partition
@@ -33,7 +34,7 @@ class KafkaConsumer(Consumer):
         self.time_log = []
         self.cntr_log_file = f'../logs_cntr/kafka_run_{uuid.uuid4()}.out'
         self.time_log_file = f'../logs_time/kafka_run_{uuid.uuid4()}.out'
-    
+
     def reset(self, reset=True):
         self.reset = True
 
@@ -110,7 +111,6 @@ class KafkaConsumer(Consumer):
     def sampling_cntr_interrupt(self):
         # time_diff =  {"all": [avg, 50, 90, 99], "1": [avg, 50, 90, 99], "2": [avg, 50, 90, 99]}
         # idex_diff =  {"all": [avg, 50, 90, 99], "1": [avg, 50, 90, 99], "2": [avg, 50, 90, 99]}
-
         time_diff_line = {}
         time_diff_all = []
         for partition, time_diff in self.time_diff.items():
@@ -133,7 +133,7 @@ class KafkaConsumer(Consumer):
         self.cntr_log.append(log_line)
         print(f"*** {os.getpid()} *** ", log_line)
 
-        self.time_diff = defaultdict(lambda:[])   
+        self.time_diff = defaultdict(lambda:[])
         self.indx_diff = defaultdict(lambda:[])
 
 
@@ -155,10 +155,11 @@ class KafkaConsumer(Consumer):
         latencies_all = sorted(latencies_all)
         latencies_line["all"] = self.calculate_4(latencies_all)
 
-        log_line = json.dumps({"processed": processed_line, "latencies": latencies_line})
+        log_line = json.dumps({"ts": self.sampling_time_cntr * self.sampling_time.microseconds, "processed": processed_line, "latencies": latencies_line})
         self.time_log.append(log_line)
         print(f"*** {os.getpid()} *** ", log_line)
 
+        self.sampling_time_cntr += 1
         self.processed = defaultdict(lambda:0)
         self.latencies = defaultdict(lambda:[])
 
