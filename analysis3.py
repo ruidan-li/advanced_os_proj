@@ -1,8 +1,42 @@
+import json
+import os
 import sys
+from audioop import mul
 from os import listdir
 from os.path import isfile, join
-import os
-import json
+from pprint import pprint
+
+from numpy import result_type
+
+# output will be like this
+#
+# result = {
+#     "consumers": {
+#         "pid_1": {
+#             "avg": [
+#                 {"timestamp": "...", "value": "..."},
+#                 ...
+#             ],
+#             "p90": [
+#                 {"timestamp": "...", "value": "..."},
+#                 ...
+#             ],
+#         }
+#     },
+#     "partitions": {
+#         "partition_1": {
+#             "avg": [
+#                 {"timestamp": "...", "value": "...", "pid": ""},
+#                 ...
+#             ],
+#             "p90": [
+#                 {"timestamp": "...", "value": "...", "pid": ""},
+#                 ...
+#             ],
+#         }
+#     }
+# }
+
 
 def process_one_file(fname):
     with open(fname) as fh:
@@ -12,101 +46,358 @@ def process_one_file(fname):
             lst.append(json.loads(line))
         return lst
 
-def align_using_min_length(multi_lst):
-    min_len = min([len(l) for l in multi_lst]) # each consumer (l) may have different number of ticks, pick the min
-    return [l[-min_len:] for l in multi_lst] # pick the last min_len ticks from each consumer
-
-def extract_ts(multi_lst):
-    extracted_list = []
-    for client in multi_lst:
-        client_list = []
-        for line in client:
-            all_list = line["ts"]
-            client_list.append(all_list)
-        extracted_list.append(client_list)
-    return extracted_list
-
-def extract_dict(multi_lst, dict_name):
-    extracted_list = []
-    for client in multi_lst:
-        client_list = []
-        for line in client:
-            all_list = line[dict_name]["all"]
-            client_list.append(all_list)
-        extracted_list.append(client_list)
-    return extracted_list
 
 def extract_avg(extracted_list, list_idx):
     result_list = []
-    for i in range(len(extracted_list[0])): # tick
+    for i in range(len(extracted_list[0])):  # tick
         tick_sum = 0
-        for c in range(len(extracted_list)): # client
+        for c in range(len(extracted_list)):  # client
             tick_sum += extracted_list[c][i][list_idx]
-        result_list.append(round(tick_sum/len(extracted_list), 3))
+        result_list.append(round(tick_sum / len(extracted_list), 3))
     return result_list
 
-def get_4_stats(lsts, dict_name): # time_diff, indx_diff, latencies
-    extr = extract_dict(lsts, dict_name)
-    avg = extract_avg(extr, 0)
-    p50 = extract_avg(extr, 1)
-    p90 = extract_avg(extr, 2)
-    p99 = extract_avg(extr, 3)
+
+def get_4_stats(line):  # avg, p50, p90, p99
+    avg = line[0]
+    p50 = line[1]
+    p90 = line[2]
+    p99 = line[3]
     return avg, p50, p90, p99
+
+
+def process_raw_data_cntr(raw_data):
+    results = {
+        "consumers": {},
+        "partitions": {},
+    }
+
+    for pid in raw_data.keys():
+        results["consumers"][pid] = {
+            "idx_diff": {
+                "avg": [],
+                "p50": [],
+                "p90": [],
+                "p99": [],
+            },
+            "time_diff": {
+                "avg": [],
+                "p50": [],
+                "p90": [],
+                "p99": [],
+            },
+        }
+        for line in raw_data[pid]:  # line should contain ts, pid, time_diff, idex_diff
+            # if pid != str(line["pid"]):  # sanity check
+            #     continue
+            ts = line["ts"]
+
+            # ----------------------------
+            # single consumer
+            avg, p50, p90, p99 = get_4_stats(line["time_diff"]["all"])
+            results["consumers"][pid]["time_diff"]["avg"].append(
+                {"timestamp": ts, "value": avg}
+            )
+            results["consumers"][pid]["time_diff"]["p50"].append(
+                {"timestamp": ts, "value": p50}
+            )
+            results["consumers"][pid]["time_diff"]["p90"].append(
+                {"timestamp": ts, "value": p90}
+            )
+            results["consumers"][pid]["time_diff"]["p99"].append(
+                {"timestamp": ts, "value": p99}
+            )
+
+            avg, p50, p90, p99 = get_4_stats(line["idex_diff"]["all"])
+            results["consumers"][pid]["idx_diff"]["avg"].append(
+                {"timestamp": ts, "value": avg}
+            )
+            results["consumers"][pid]["idx_diff"]["p50"].append(
+                {"timestamp": ts, "value": p50}
+            )
+            results["consumers"][pid]["idx_diff"]["p90"].append(
+                {"timestamp": ts, "value": p90}
+            )
+            results["consumers"][pid]["idx_diff"]["p99"].append(
+                {"timestamp": ts, "value": p99}
+            )
+
+            # this is bad practice, but we need to do this fast
+            del line["time_diff"]["all"]
+            del line["idex_diff"]["all"]
+            # end of single consumer
+            # ----------------------------
+
+            # ----------------------------
+            # partitions
+            for partition in line["time_diff"].keys():
+                if (
+                    partition not in results["partitions"]
+                ):  # check if partition exists inside result
+                    results["partitions"][partition] = {
+                        "idx_diff": {
+                            "avg": [],
+                            "p50": [],
+                            "p90": [],
+                            "p99": [],
+                        },
+                        "time_diff": {
+                            "avg": [],
+                            "p50": [],
+                            "p90": [],
+                            "p99": [],
+                        },
+                    }
+                avg, p50, p90, p99 = get_4_stats(line["time_diff"][partition])
+                # need to save pid, because different consumer might consume this partition
+                results["partitions"][partition]["time_diff"]["avg"].append(
+                    {"timestamp": ts, "value": avg, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["time_diff"]["p50"].append(
+                    {"timestamp": ts, "value": p50, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["time_diff"]["p90"].append(
+                    {"timestamp": ts, "value": p90, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["time_diff"]["p99"].append(
+                    {"timestamp": ts, "value": p99, "pid": line["pid"]}
+                )
+
+            for partition in line["idex_diff"].keys():
+                if (
+                    partition not in results["partitions"]
+                ):  # check if partition exists inside result
+                    results["partitions"][partition] = {
+                        "idx_diff": {
+                            "avg": [],
+                            "p50": [],
+                            "p90": [],
+                            "p99": [],
+                        },
+                        "time_diff": {
+                            "avg": [],
+                            "p50": [],
+                            "p90": [],
+                            "p99": [],
+                        },
+                    }
+                avg, p50, p90, p99 = get_4_stats(line["idex_diff"][partition])
+                # need to save pid, because different consumer might consume this partition
+                results["partitions"][partition]["idx_diff"]["avg"].append(
+                    {"timestamp": ts, "value": avg, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["idx_diff"]["p50"].append(
+                    {"timestamp": ts, "value": p50, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["idx_diff"]["p90"].append(
+                    {"timestamp": ts, "value": p90, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["idx_diff"]["p99"].append(
+                    {"timestamp": ts, "value": p99, "pid": line["pid"]}
+                )
+
+            # end of partitions
+            # ----------------------------
+
+        # sort by timestamp, make sure that everything is sorted asc
+        for diff in results["consumers"][pid].keys():
+            for key in results["consumers"][pid][diff].keys():
+                results["consumers"][pid][diff][key] = sorted(
+                    results["consumers"][pid][diff][key], key=lambda v: v["timestamp"]
+                )
+
+    for partition in results["partitions"].keys():
+        for diff in results["partitions"][partition].keys():
+            for key in results["partitions"][partition][diff].keys():
+                results["partitions"][partition][diff][key] = sorted(
+                    results["partitions"][partition][diff][key],
+                    key=lambda v: v["timestamp"],
+                )
+
+    return results
+
 
 def get_avg_tput(lsts):
     extracted_list = extract_dict(lsts, "processed")
     result_list = []
-    for i in range(len(extracted_list[0])): # tick
+    for i in range(len(extracted_list[0])):  # tick
         tick_sum = 0
-        for c in range(len(extracted_list)): # client
+        for c in range(len(extracted_list)):  # client
             tick_sum += extracted_list[c][i]
-        result_list.append(round(tick_sum/len(extracted_list), 3))
+        result_list.append(round(tick_sum / len(extracted_list), 3))
     return result_list
+
 
 def get_sum_tput(lsts):
     extracted_list = extract_dict(lsts, "processed")
     result_list = []
-    for i in range(len(extracted_list[0])): # tick
+    for i in range(len(extracted_list[0])):  # tick
         tick_sum = 0
-        for c in range(len(extracted_list)): # client
+        for c in range(len(extracted_list)):  # client
             tick_sum += extracted_list[c][i]
         result_list.append(round(tick_sum, 3))
     return result_list
 
 
+def process_raw_data_time(raw_data):
+    results = {
+        "consumers": {},
+        "partitions": {},
+    }
+
+    for pid in raw_data.keys():
+        results["consumers"][pid] = {
+            "latencies": {
+                "avg": [],
+                "p50": [],
+                "p90": [],
+                "p99": [],
+            },
+            "throughput": [],
+        }
+        for line in raw_data[pid]:  # line should contain ts, pid, time_diff, idex_diff
+            # if pid != str(line["pid"]):  # sanity check
+            #     continue
+            ts = line["ts"]
+
+            # ----------------------------
+            # single consumer
+            avg, p50, p90, p99 = get_4_stats(line["latencies"]["all"])
+            results["consumers"][pid]["latencies"]["avg"].append(
+                {"timestamp": ts, "value": avg}
+            )
+            results["consumers"][pid]["latencies"]["p50"].append(
+                {"timestamp": ts, "value": p50}
+            )
+            results["consumers"][pid]["latencies"]["p90"].append(
+                {"timestamp": ts, "value": p90}
+            )
+            results["consumers"][pid]["latencies"]["p99"].append(
+                {"timestamp": ts, "value": p99}
+            )
+
+            throughput = line["processed"]["all"]
+            results["consumers"][pid]["throughput"].append(
+                {"timestamp": ts, "value": throughput}
+            )
+            # this is bad practice, but we need to do this fast
+            del line["latencies"]["all"]
+            del line["processed"]["all"]
+            # end of single consumer
+            # ----------------------------
+
+            # ----------------------------
+            # partitions
+            for partition in line["latencies"].keys():
+                if (
+                    partition not in results["partitions"]
+                ):  # check if partition exists inside result
+                    results["partitions"][partition] = {
+                        "latencies": {
+                            "avg": [],
+                            "p50": [],
+                            "p90": [],
+                            "p99": [],
+                        },
+                        "throughput": [],
+                    }
+                avg, p50, p90, p99 = get_4_stats(line["latencies"][partition])
+                # need to save pid, because different consumer might consume this partition
+                results["partitions"][partition]["latencies"]["avg"].append(
+                    {"timestamp": ts, "value": avg, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["latencies"]["p50"].append(
+                    {"timestamp": ts, "value": p50, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["latencies"]["p90"].append(
+                    {"timestamp": ts, "value": p90, "pid": line["pid"]}
+                )
+                results["partitions"][partition]["latencies"]["p99"].append(
+                    {"timestamp": ts, "value": p99, "pid": line["pid"]}
+                )
+
+            for partition in line["processed"].keys():
+                if (
+                    partition not in results["partitions"]
+                ):  # check if partition exists inside result
+                    results["partitions"][partition] = {
+                        "latencies": {
+                            "avg": [],
+                            "p50": [],
+                            "p90": [],
+                            "p99": [],
+                        },
+                        "throughput": [],
+                    }
+                throughput = line["processed"][partition]
+                # need to save pid, because different consumer might consume this partition
+                results["partitions"][partition]["throughput"].append(
+                    {"timestamp": ts, "value": throughput, "pid": line["pid"]}
+                )
+            # end of partitions
+            # ----------------------------
+
+        # sort consumers by timestamp, make sure that everything is sorted asc
+        for diff in results["consumers"][pid].keys():
+            if type(results["consumers"][pid][diff]) is dict:
+                for key in results["consumers"][pid][diff].keys():
+                    results["consumers"][pid][diff][key] = sorted(
+                        results["consumers"][pid][diff][key],
+                        key=lambda v: v["timestamp"],
+                    )
+            elif type(results["consumers"][pid][diff]) is list:
+                results["consumers"][pid][diff] = sorted(
+                    results["consumers"][pid][diff], key=lambda v: v["timestamp"]
+                )
+
+    # sort partitions by timestamp, make sure that everything is sorted asc
+    for partition in results["partitions"].keys():
+        for diff in results["partitions"][partition].keys():
+            if type(results["partitions"][partition][diff]) is dict:
+                for key in results["partitions"][partition][diff].keys():
+                    results["partitions"][partition][diff][key] = sorted(
+                        results["partitions"][partition][diff][key],
+                        key=lambda v: v["timestamp"],
+                    )
+            elif type(results["partitions"][partition][diff]) is list:
+                results["partitions"][partition][diff] = sorted(
+                    results["partitions"][partition][diff], key=lambda v: v["timestamp"]
+                )
+
+    return results
+
+
+def get_pid(filename):
+    names = filename.split("_")
+    return names[-1].replace(".out", "")
+
+
 def extract_from_logs_cntr():
-    lsts = []
+    raw_data = {}
     for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs_cntr")):
         for filename in files:
+            pid = get_pid(filename)
             lst = process_one_file(join(dirname, filename))
-            lsts.append(lst)
-    lsts = align_using_min_length(lsts)
+            raw_data[pid] = lst
+    result = process_raw_data_cntr(raw_data)
+    return result
 
-    return get_4_stats(lsts, "time_diff"), get_4_stats(lsts, "idex_diff")
 
 def extract_from_logs_time():
-    lsts = []
+    raw_data = {}
     for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs_time")):
         for filename in files:
+            pid = get_pid(filename)
             lst = process_one_file(join(dirname, filename))
-            ts = extract_ts(lst)
-            lats = get_4_stats([lst], "latencies")
-            tputs =  (get_avg_tput([lst]), get_sum_tput([lst]))
-    return []
-            # lsts.append(lst)
-    # lsts = align_using_timestamp(lsts)
-
-    # return get_4_stats(lsts, "latencies"),  (get_avg_tput(lsts), get_sum_tput(lsts))
+            raw_data[pid] = lst
+    result = process_raw_data_time(raw_data)
+    return result
 
 
-from pprint import pprint
-
-# res_obj = (
-#   ((tavg, tp50, tp90, tp99), (iavg, ip50, ip90, ip99)),
-#   ((lavg, lp50, lp90, lp99), (avg_tput, sum_tput))
-# )
 res_obj = extract_from_logs_cntr(), extract_from_logs_time()
 
+# pprint(extract_from_logs_time())
+
 import pickle
+
 filehandler = open(f"{sys.argv[1]}/res_obj.pickle", "wb")
 pickle.dump(res_obj, filehandler)
