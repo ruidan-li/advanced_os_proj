@@ -8,8 +8,8 @@
 # sa=$7 sampling interval (deprecated, use line 22, 27 of consumer.py instead)
 
 rf=3
-vr=1
-op=1000000
+vr=6
+op=3000000
 sa=100
 ps=0.00008               # producer sleep time, no need to pass as an argument.
 echo $ps > sleeptime.txt # when a producer runs, it checks this file every 5 secs

@@ -12,7 +12,7 @@ rfs = [3]
 pas = [4]
 cos = [4]
 pos = [4]
-vrs = [226]
+vrs = [1, 2, 3, 4, 5, 6]
 
 def fetch_experiment_data():
     experiments= []
@@ -120,7 +120,7 @@ def plot_experiments(experiments, metric="avg"):
             '-'.join(map(str, cos)),
             '-'.join(map(str, pos)),
             '-'.join(map(str, vrs))])
-    print('./fig/{title}.png')
+    print(f'./fig/{title}.png')
     plt.savefig(f'./fig/{title}.png', bbox_inches='tight')
 
 plot_experiments(fetch_experiment_data())
