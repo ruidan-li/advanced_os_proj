@@ -1,10 +1,7 @@
-import time
-from confluent_kafka import Consumer, KafkaError, KafkaException, OFFSET_BEGINNING
-import os
-import arrow
 import datetime
 import json
 import os
+import time
 import uuid
 from collections import defaultdict
 from time import sleep
@@ -56,10 +53,9 @@ class KafkaConsumer(Consumer):
     def stop(self):
         self._running = False
 
-    def basic_consume(self, timeout, wait=30,
-                      put_to_sleep=False,
-                      sleep_delay_sec=0,
-                      sleep_duration=0):
+    def basic_consume(
+        self, timeout, wait=30, put_to_sleep=False, sleep_delay_sec=0, sleep_duration=0
+    ):
         if put_to_sleep:
             start = time.time()
         wait_count = 0
@@ -72,7 +68,7 @@ class KafkaConsumer(Consumer):
                     print(f"*** {os.getpid()} *** Sleep for {sleep_duration} sec")
                     for _ in range(sleep_duration):
                         self.sleep()
-                    put_to_sleep = False    # only sleep once
+                    put_to_sleep = False  # only sleep once
                     print(f"*** {os.getpid()} *** wake up at {arrow.utcnow()}")
                 msg = self.poll(timeout=timeout)
                 if msg is None:
@@ -83,11 +79,15 @@ class KafkaConsumer(Consumer):
                 elif msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         # End of partition event
-                        print('%% %s [%d] reached end at offset %d\n' %
-                                        (msg.topic(), msg.partition(), msg.offset()))
+                        print(
+                            "%% %s [%d] reached end at offset %d\n"
+                            % (msg.topic(), msg.partition(), msg.offset())
+                        )
                     elif msg.error().code() == KafkaError._MAX_POLL_EXCEEDED:
-                        print('%% %s [%d] max poll exceeded triggered\n' %
-                                        (msg.topic(), msg.partition()))
+                        print(
+                            "%% %s [%d] max poll exceeded triggered\n"
+                            % (msg.topic(), msg.partition())
+                        )
                     elif msg.error():
                         raise KafkaException(msg.error())
                 else:
@@ -96,7 +96,9 @@ class KafkaConsumer(Consumer):
                     total_count += 1
                     new_partition = self.handle_msg(msg, total_count)
                     if new_partition:
-                        print(f'New partition detected after processing {total_count} msg.')
+                        print(
+                            f"New partition detected after processing {total_count} msg."
+                        )
                     self.current_time = arrow.now().timestamp()
                     if self.sampling_cntr == self.sampling_ival:
                         self.sampling_cntr_interrupt()
@@ -142,7 +144,7 @@ class KafkaConsumer(Consumer):
         # check if the msg belongs to a new partition
         if msg.partition() in self.partition_hist:
             return False
-        elif curr_ct > 1000:    # only start tracking after the consumption is stablized
+        elif curr_ct > 1000:  # only start tracking after the consumption is stablized
             self.partition_hist.append(msg.partition())
             return True
         else:
@@ -231,11 +233,11 @@ class KafkaConsumer(Consumer):
             return 0
 
     @staticmethod
-    def calculate_percent(lst, p): # lst: sorted, # p = 0.5, 0.9, 0.99...
+    def calculate_percent(lst, p):  # lst: sorted, # p = 0.5, 0.9, 0.99...
         try:
-            return lst[int(p*float(len(lst)))]
+            return lst[int(p * float(len(lst)))]
         except IndexError:
-            return 0 
+            return 0
 
     def msg_process(self, msg, curr_p, send_time):
         print(
@@ -310,6 +312,6 @@ class KafkaConsumer(Consumer):
 
     def sleep(self):
         time.sleep(1)
-        if (arrow.now() - self.last_time) >= self.sampling_time:
-            self.sampling_time_interrupt()
-            self.last_time = arrow.now()
+        # if (arrow.now() - self.last_time) >= self.sampling_time:
+        #     self.sampling_time_interrupt()
+        #     self.last_time = arrow.now()
