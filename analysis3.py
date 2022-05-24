@@ -71,7 +71,7 @@ def process_raw_data_cntr(raw_data):
         "partitions": {},
     }
 
-    for pid in raw_data.keys():
+    for pid in raw_data:
         results["consumers"][pid] = {
             "idx_diff": {
                 "avg": [],
@@ -129,7 +129,7 @@ def process_raw_data_cntr(raw_data):
 
             # ----------------------------
             # partitions
-            for partition in line["time_diff"].keys():
+            for partition in line["time_diff"]:
                 if (
                     partition not in results["partitions"]
                 ):  # check if partition exists inside result
@@ -162,7 +162,7 @@ def process_raw_data_cntr(raw_data):
                     {"timestamp": ts, "value": p99, "pid": line["pid"]}
                 )
 
-            for partition in line["idex_diff"].keys():
+            for partition in line["idex_diff"]:
                 if (
                     partition not in results["partitions"]
                 ):  # check if partition exists inside result
@@ -199,15 +199,15 @@ def process_raw_data_cntr(raw_data):
             # ----------------------------
 
         # sort by timestamp, make sure that everything is sorted asc
-        for diff in results["consumers"][pid].keys():
-            for key in results["consumers"][pid][diff].keys():
+        for diff in results["consumers"][pid]:
+            for key in results["consumers"][pid][diff]:
                 results["consumers"][pid][diff][key] = sorted(
                     results["consumers"][pid][diff][key], key=lambda v: v["timestamp"]
                 )
 
-    for partition in results["partitions"].keys():
-        for diff in results["partitions"][partition].keys():
-            for key in results["partitions"][partition][diff].keys():
+    for partition in results["partitions"]:
+        for diff in results["partitions"][partition]:
+            for key in results["partitions"][partition][diff]:
                 results["partitions"][partition][diff][key] = sorted(
                     results["partitions"][partition][diff][key],
                     key=lambda v: v["timestamp"],
@@ -216,26 +216,26 @@ def process_raw_data_cntr(raw_data):
     return results
 
 
-def get_avg_tput(lsts):
-    extracted_list = extract_dict(lsts, "processed")
-    result_list = []
-    for i in range(len(extracted_list[0])):  # tick
-        tick_sum = 0
-        for c in range(len(extracted_list)):  # client
-            tick_sum += extracted_list[c][i]
-        result_list.append(round(tick_sum / len(extracted_list), 3))
-    return result_list
+# def get_avg_tput(lsts):
+#     extracted_list = extract_dict(lsts, "processed")
+#     result_list = []
+#     for i in range(len(extracted_list[0])):  # tick
+#         tick_sum = 0
+#         for c in range(len(extracted_list)):  # client
+#             tick_sum += extracted_list[c][i]
+#         result_list.append(round(tick_sum / len(extracted_list), 3))
+#     return result_list
 
 
-def get_sum_tput(lsts):
-    extracted_list = extract_dict(lsts, "processed")
-    result_list = []
-    for i in range(len(extracted_list[0])):  # tick
-        tick_sum = 0
-        for c in range(len(extracted_list)):  # client
-            tick_sum += extracted_list[c][i]
-        result_list.append(round(tick_sum, 3))
-    return result_list
+# def get_sum_tput(lsts):
+#     extracted_list = extract_dict(lsts, "processed")
+#     result_list = []
+#     for i in range(len(extracted_list[0])):  # tick
+#         tick_sum = 0
+#         for c in range(len(extracted_list)):  # client
+#             tick_sum += extracted_list[c][i]
+#         result_list.append(round(tick_sum, 3))
+#     return result_list
 
 
 def process_raw_data_time(raw_data):
@@ -244,7 +244,7 @@ def process_raw_data_time(raw_data):
         "partitions": {},
     }
 
-    for pid in raw_data.keys():
+    for pid in raw_data:
         results["consumers"][pid] = {
             "latencies": {
                 "avg": [],
@@ -287,7 +287,7 @@ def process_raw_data_time(raw_data):
 
             # ----------------------------
             # partitions
-            for partition in line["latencies"].keys():
+            for partition in line["latencies"]:
                 if (
                     partition not in results["partitions"]
                 ):  # check if partition exists inside result
@@ -315,7 +315,7 @@ def process_raw_data_time(raw_data):
                     {"timestamp": ts, "value": p99, "pid": line["pid"]}
                 )
 
-            for partition in line["processed"].keys():
+            for partition in line["processed"]:
                 if (
                     partition not in results["partitions"]
                 ):  # check if partition exists inside result
@@ -337,9 +337,9 @@ def process_raw_data_time(raw_data):
             # ----------------------------
 
         # sort consumers by timestamp, make sure that everything is sorted asc
-        for diff in results["consumers"][pid].keys():
+        for diff in results["consumers"][pid]:
             if type(results["consumers"][pid][diff]) is dict:
-                for key in results["consumers"][pid][diff].keys():
+                for key in results["consumers"][pid][diff]:
                     results["consumers"][pid][diff][key] = sorted(
                         results["consumers"][pid][diff][key],
                         key=lambda v: v["timestamp"],
@@ -350,10 +350,10 @@ def process_raw_data_time(raw_data):
                 )
 
     # sort partitions by timestamp, make sure that everything is sorted asc
-    for partition in results["partitions"].keys():
-        for diff in results["partitions"][partition].keys():
+    for partition in results["partitions"]:
+        for diff in results["partitions"][partition]:
             if type(results["partitions"][partition][diff]) is dict:
-                for key in results["partitions"][partition][diff].keys():
+                for key in results["partitions"][partition][diff]:
                     results["partitions"][partition][diff][key] = sorted(
                         results["partitions"][partition][diff][key],
                         key=lambda v: v["timestamp"],
