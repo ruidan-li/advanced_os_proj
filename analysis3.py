@@ -395,8 +395,9 @@ def extract_from_logs_time():
     result = process_raw_data_time(raw_data)
     return result
 
+
 def extract_who_consume_the_partition(times):
-    result = {}
+    partitions = {}
     for partition in times["partitions"]:
         ts = times["partitions"][partition]["latencies"]["avg"][0]["timestamp"]
         consumers = {}
@@ -404,17 +405,35 @@ def extract_who_consume_the_partition(times):
             if line["pid"] not in consumers:
                 consumers[line["pid"]] = 0
             consumers[line["pid"]] += 1
-        result[partition] = list(consumers.keys())
+        partitions[partition] = list(consumers.keys())
         # print(f"partition: {partition}, consumers: {list(consumers.keys())}")
-    return result
+    return partitions
+
+
+def extract_who_get_the_partitions(partition_consumers):
+    consumers = {}
+    for partition in partition_consumers:
+        for consumer in partition_consumers[partition]:
+            if consumer not in consumers:
+                consumers[consumer] = set()
+            consumers[consumer].add(partition)
+
+    for consumer in consumers:
+        consumers[consumer] = list(consumers[consumer])
+
+    return consumers
+
 
 print("Running the analysis")
 msg_based = extract_from_logs_cntr()
 time_based = extract_from_logs_time()
-who = extract_who_consume_the_partition(time_based)
+grouped_by_partition = extract_who_consume_the_partition(time_based)
+grouped_by_consumer = extract_who_get_the_partitions(grouped_by_partition)
 
 import pickle
 
 print("Saving the analysis result")
 filehandler = open(f"{sys.argv[1]}/res_obj.pickle", "wb")
-pickle.dump((msg_based, time_based, who), filehandler)
+pickle.dump(
+    (msg_based, time_based, grouped_by_partition, grouped_by_consumer), filehandler
+)
