@@ -90,8 +90,7 @@ class KafkaConsumer(Consumer):
                 if put_to_sleep and (time.time() - start) >= sleep_delay_sec:
                     print(f"*** {os.getpid()} *** Sleep for {sleep_duration} sec")
                     self.metadata["sleep_start_ts"] = arrow.now().timestamp()
-                    for _ in range(sleep_duration):
-                        self.sleep()
+                    time.sleep(sleep_duration)
                     put_to_sleep = False  # only sleep once
                     self.metadata["sleep_end_ts"] = arrow.now().timestamp()
                     self.reset_counter()  # resetting all the counters
@@ -337,9 +336,3 @@ class KafkaConsumer(Consumer):
     @staticmethod
     def calc_trip_time(send_time):
         return arrow.now().timestamp() - send_time
-
-    def sleep(self):
-        time.sleep(1)
-        # if (arrow.now() - self.last_time) >= self.sampling_time:
-        #     self.sampling_time_interrupt()
-        #     self.last_time = arrow.now()
