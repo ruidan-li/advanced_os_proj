@@ -38,11 +38,31 @@ class KafkaConsumer(Consumer):
 
         self.cntr_log = []
         self.time_log = []
-        self.cntr_log_file = f"../logs_cntr/kafka_run_{uuid.uuid4()}_{self.pid}.out"
-        self.time_log_file = f"../logs_time/kafka_run_{uuid.uuid4()}_{self.pid}.out"
+        self.metadata = {
+            "pid": self.pid,
+            "msg_based_sample": self.sampling_ival,
+            "sampling_time_sec": self.sampling_time.seconds,
+            "sleep": False,
+            "sleep_delay_sec": 0,
+            "sleep_duration_sec": 0,
+            "sleep_start_ts": None,
+            "sleep_end_ts": None,
+        }
+
+        self.cntr_log_file = f"../logs_cntr/kafka_run_{self.pid}.out"
+        self.time_log_file = f"../logs_time/kafka_run_{self.pid}.out"
+        self.consumer_metadata_out_file = f"../logs/kakfa_run_{self.pid}.out"
 
         # for tracking if new partitions kick in
         self.partition_hist = []
+
+    def reset_counter(self):
+        self.sampling_time_cntr = 0
+        self.sampling_time_cntr = 0
+        self.time_diff = defaultdict(lambda: [])  # each element belongs to a partition
+        self.indx_diff = defaultdict(lambda: [])
+        self.processed = defaultdict(lambda: 0)  # each element belongs to a partition
+        self.latencies = defaultdict(lambda: [])
 
     def reset(self, reset=True):
         self.reset = True
@@ -60,15 +80,21 @@ class KafkaConsumer(Consumer):
             start = time.time()
         wait_count = 0
         total_count = 0
+        self.metadata["sleep"] = put_to_sleep
+        self.metadata["sleep_delay_sec"] = sleep_delay_sec
+        self.metadata["sleep_duration_sec"] = sleep_duration
         try:
             self.subscribe(self._topic)
             self.last_time = arrow.now()
             while self._running:
                 if put_to_sleep and (time.time() - start) >= sleep_delay_sec:
                     print(f"*** {os.getpid()} *** Sleep for {sleep_duration} sec")
+                    self.metadata["sleep_start_ts"] = arrow.now().timestamp()
                     for _ in range(sleep_duration):
                         self.sleep()
                     put_to_sleep = False  # only sleep once
+                    self.metadata["sleep_end_ts"] = arrow.now().timestamp()
+                    self.reset_counter()  # resetting all the counters
                     print(f"*** {os.getpid()} *** wake up at {arrow.utcnow()}")
                 msg = self.poll(timeout=timeout)
                 if msg is None:
@@ -118,6 +144,8 @@ class KafkaConsumer(Consumer):
                 fp.write("\n".join(self.cntr_log))
             with open(self.time_log_file, "w") as fp:
                 fp.write("\n".join(self.time_log))
+            with open(self.consumer_metadata_out_file, "w") as fp:
+                json.dump(self.metadata, fp)
 
     def handle_msg(self, msg, curr_ct):
         self.sampling_cntr += 1

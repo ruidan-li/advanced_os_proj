@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 from matplotlib.colors import ListedColormap
-
 # from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
 
@@ -21,7 +20,7 @@ rfs = [3]
 pas = [4]
 cos = [4]
 pos = [4]
-vrs = [10]
+vrs = [15]
 
 
 def fetch_experiment_data():
@@ -196,7 +195,7 @@ def get_cmap(n, name="hsv"):
     return plt.cm.get_cmap(name, n)
 
 
-def emit_x_and_y(data):
+def emit_x_and_y(data, consumer_metadata):
     timestamps = []
     values = []
 
@@ -215,7 +214,9 @@ def emit_x_and_y(data):
     return timestamps, values
 
 
-def emit_x_and_y_partitions(data, consumer_plot_metadata, linestyle="solid"):
+def emit_x_and_y_partitions(
+    data, consumer_metadata, consumer_plot_metadata, linestyle="solid"
+):
     results = []  # [[x_1, y_1], [x_2, y_2], ... ]
 
     if len(data) == 0:
@@ -226,13 +227,22 @@ def emit_x_and_y_partitions(data, consumer_plot_metadata, linestyle="solid"):
 
     ts = data[0]["timestamp"]
 
-    timestamps = []
-    values = []
     segments = []
     line_colors = []
-    line_styles = []
 
     for idx, (tick, tick_next) in enumerate(zip(data, data[1:])):
+        metadata = consumer_metadata[str(tick["pid"])]
+        if metadata["sleep"]:
+            # if tick["timestamp"] >= metadata["sleep_start_ts"]:
+            #     print(
+            #         f"sleep_start {metadata['sleep_start_ts']}, sleep_end {metadata['sleep_end_ts']}, ts {tick['timestamp']}, next_ts {tick_next['timestamp']}"
+            #     )
+            if (
+                tick["timestamp"] >= metadata["sleep_start_ts"]
+                and tick_next["timestamp"] <= metadata["sleep_end_ts"]
+            ):
+                continue
+
         segments.append(
             [
                 (tick["timestamp"] - ts, tick["value"]),
@@ -252,6 +262,7 @@ def emit_x_and_y_partitions(data, consumer_plot_metadata, linestyle="solid"):
 def make_legends(consumer_partitions, linestyles, consumer_plot_metadata, **kwargs):
     lines = []
     names = []
+    print(consumer_partitions, linestyles, consumer_plot_metadata)
     for consumer in consumer_partitions:  # { consumer_id: [partitions] }
         consumer_metadata = consumer_plot_metadata[str(consumer)]
         for partition in consumer_partitions[consumer]:
@@ -271,6 +282,12 @@ def make_legends(consumer_partitions, linestyles, consumer_plot_metadata, **kwar
 
 def plot_experiments(experiments, output_folder, metric="avg"):
     for name, exp in experiments:
+
+        ##############################################
+        ## CONSUMER PLOTS
+        ##############################################
+
+        print("Building consumer plots")
         fig = plt.figure(constrained_layout=True)
         fig.suptitle(f"Experiment {name} Consumers", fontsize=18)
         fig.set_size_inches(13, 13)
@@ -278,7 +295,13 @@ def plot_experiments(experiments, output_folder, metric="avg"):
 
         axs = {}
 
-        msg_based, time_based, partition_consumers, consumer_partitions = exp
+        (
+            consumer_metadata,
+            msg_based,
+            time_based,
+            partition_consumers,
+            consumer_partitions,
+        ) = exp
 
         counter = 0
 
@@ -286,7 +309,7 @@ def plot_experiments(experiments, output_folder, metric="avg"):
 
         for consumer_idx, consumer in enumerate(msg_based["consumers"]):
             if consumer not in consumer_plot_metadata:
-                consumer_plot_metadata[consumer] = {
+                consumer_plot_metadata[str(consumer)] = {
                     "idx": consumer_idx,
                     "color": COLORS[consumer_idx % len(COLORS)],
                 }
@@ -304,7 +327,10 @@ def plot_experiments(experiments, output_folder, metric="avg"):
                         )
                     unit, label = get_label(diff, metric)
                     axs[key].plot(
-                        *emit_x_and_y(msg_based["consumers"][consumer][diff][metric]),
+                        *emit_x_and_y(
+                            msg_based["consumers"][consumer][diff][metric],
+                            consumer_metadata=consumer_metadata,
+                        ),
                         label=f"Consumer #{consumer_idx}",
                         color=consumer_plot_metadata[consumer]["color"],
                     )
@@ -317,7 +343,7 @@ def plot_experiments(experiments, output_folder, metric="avg"):
         counter += 2  # 2 rows are already occupied by msg_based
         for consumer_idx, consumer in enumerate(time_based["consumers"]):
             if consumer not in consumer_plot_metadata:
-                consumer_plot_metadata[consumer] = {
+                consumer_plot_metadata[str(consumer)] = {
                     "idx": consumer_idx,
                     "color": COLORS[consumer_idx % len(COLORS)],
                 }
@@ -339,7 +365,8 @@ def plot_experiments(experiments, output_folder, metric="avg"):
                         unit, label = get_label(diff, metric)
                         axs[key].plot(
                             *emit_x_and_y(
-                                time_based["consumers"][consumer][diff][metric]
+                                time_based["consumers"][consumer][diff][metric],
+                                consumer_metadata=consumer_metadata,
                             ),
                             label=f"Consumer #{consumer_idx}",
                             color=consumer_plot_metadata[consumer]["color"],
@@ -361,7 +388,10 @@ def plot_experiments(experiments, output_folder, metric="avg"):
                         )
                     unit, label = get_label(diff, "all")
                     axs[key].plot(
-                        *emit_x_and_y(time_based["consumers"][consumer][diff]),
+                        *emit_x_and_y(
+                            time_based["consumers"][consumer][diff],
+                            consumer_metadata=consumer_metadata,
+                        ),
                         label=f"Consumer #{consumer_idx}",
                         color=consumer_plot_metadata[consumer]["color"],
                     )
@@ -372,12 +402,13 @@ def plot_experiments(experiments, output_folder, metric="avg"):
                     )
                     axs[key].legend()
 
+        print("Saving consumer plots")
         plt.savefig(f"{output_folder}/{name}-consumer.png", bbox_inches="tight")
 
         ##############################################
         ## PARTITION PLOTS
         ##############################################
-
+        print("Building partition plots")
         fig = plt.figure(constrained_layout=True)
         fig.suptitle(f"Experiment {name} Partitions", fontsize=18)
         fig.set_size_inches(20, 20)
@@ -406,8 +437,9 @@ def plot_experiments(experiments, output_folder, metric="avg"):
                     unit, label = get_label(diff, metric)
                     lc = emit_x_and_y_partitions(
                         msg_based["partitions"][partition][diff][metric],
-                        consumer_plot_metadata,
-                        linestyles[partition],
+                        consumer_metadata=consumer_metadata,
+                        consumer_plot_metadata=consumer_plot_metadata,
+                        linestyle=linestyles[partition],
                     )
                     axs[key].add_collection(lc)
                     axs[key].autoscale()
@@ -437,8 +469,9 @@ def plot_experiments(experiments, output_folder, metric="avg"):
                         unit, label = get_label(diff, metric)
                         lc = emit_x_and_y_partitions(
                             time_based["partitions"][partition][diff][metric],
-                            consumer_plot_metadata,
-                            linestyles[partition],
+                            consumer_metadata=consumer_metadata,
+                            consumer_plot_metadata=consumer_plot_metadata,
+                            linestyle=linestyles[partition],
                         )
                         axs[key].add_collection(lc)
                         axs[key].autoscale()
@@ -459,8 +492,9 @@ def plot_experiments(experiments, output_folder, metric="avg"):
                     unit, label = get_label(diff, "all")
                     lc = emit_x_and_y_partitions(
                         time_based["partitions"][partition][diff],
-                        consumer_plot_metadata,
-                        linestyles[partition],
+                        consumer_metadata=consumer_metadata,
+                        consumer_plot_metadata=consumer_plot_metadata,
+                        linestyle=linestyles[partition],
                     )
 
                     axs[key].add_collection(lc)
@@ -477,9 +511,12 @@ def plot_experiments(experiments, output_folder, metric="avg"):
             linestyles=linestyles,
         )
 
-        for key in axs:
-            axs[key].legend(lines, names, ncol=3)
+        # handles, labels = ax.get_legend_handles_labels()
+        fig.legend(lines, names, loc="upper center")
 
+        # for key in axs:
+        # axs[key].legend(lines, names, ncol=3)
+        print("Saving partition plots")
         plt.savefig(f"{output_folder}/{name}-partition.png", bbox_inches="tight")
 
 

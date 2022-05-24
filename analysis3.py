@@ -374,6 +374,16 @@ def get_pid(filename):
     return names[-1].replace(".out", "")
 
 
+def extract_consumer_metadata():
+    metadata = {}
+    for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs")):
+        for filename in files:
+            pid = get_pid(filename)
+            meta = json.load(open(join(dirname, filename)))
+            metadata[pid] = meta
+    return metadata
+
+
 def extract_from_logs_cntr():
     raw_data = {}
     for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs_cntr")):
@@ -425,6 +435,7 @@ def extract_who_get_the_partitions(partition_consumers):
 
 
 print("Running the analysis")
+consumer_metadata = extract_consumer_metadata()
 msg_based = extract_from_logs_cntr()
 time_based = extract_from_logs_time()
 grouped_by_partition = extract_who_consume_the_partition(time_based)
@@ -435,5 +446,12 @@ import pickle
 print("Saving the analysis result")
 filehandler = open(f"{sys.argv[1]}/res_obj.pickle", "wb")
 pickle.dump(
-    (msg_based, time_based, grouped_by_partition, grouped_by_consumer), filehandler
+    (
+        consumer_metadata,
+        msg_based,
+        time_based,
+        grouped_by_partition,
+        grouped_by_consumer,
+    ),
+    filehandler,
 )
