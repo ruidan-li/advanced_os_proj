@@ -44,6 +44,7 @@ class KafkaConsumer(Consumer):
         self.cntr_log_file = f"../logs_cntr/kafka_run_{uuid.uuid4()}_{self.pid}.out"
         self.time_log_file = f"../logs_time/kafka_run_{uuid.uuid4()}_{self.pid}.out"
 
+        # for tracking if new partitions kick in
         self.partition_hist = []
 
     def reset(self, reset=True):
@@ -224,11 +225,17 @@ class KafkaConsumer(Consumer):
 
     @staticmethod
     def calculate_average(lst, rd=3):
-        return round(sum(lst) / len(lst), rd)
+        try:
+            return round(sum(lst) / len(lst), 3)
+        except ZeroDivisionError:
+            return 0
 
     @staticmethod
-    def calculate_percent(lst, p):  # lst: sorted, # p = 0.5, 0.9, 0.99...
-        return lst[int(p * float(len(lst)))]
+    def calculate_percent(lst, p): # lst: sorted, # p = 0.5, 0.9, 0.99...
+        try:
+            return lst[int(p*float(len(lst)))]
+        except IndexError:
+            return 0 
 
     def msg_process(self, msg, curr_p, send_time):
         print(
@@ -300,3 +307,9 @@ class KafkaConsumer(Consumer):
     @staticmethod
     def calc_trip_time(send_time):
         return arrow.now().timestamp() - send_time
+
+    def sleep(self):
+        time.sleep(1)
+        if (arrow.now() - self.last_time) >= self.sampling_time:
+            self.sampling_time_interrupt()
+            self.last_time = arrow.now()
