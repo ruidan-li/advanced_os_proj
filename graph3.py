@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 from matplotlib.colors import ListedColormap
+
 # from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
 
@@ -379,7 +380,7 @@ def plot_experiments(experiments, output_folder, metric="avg"):
 
         fig = plt.figure(constrained_layout=True)
         fig.suptitle(f"Experiment {name} Partitions", fontsize=18)
-        fig.set_size_inches(26, 26)
+        fig.set_size_inches(20, 20)
         fig.tight_layout(h_pad=3.5, rect=[0, 0.03, 1, 0.97])
 
         axs = {}
