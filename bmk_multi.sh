@@ -6,7 +6,7 @@
 # vr=$5 # version of the code
 # op=$6 number of operations
 # sa=$7 sampling interval (deprecated, use line 22, 27 of consumer.py instead)
-# 8 4 8 1000000 0.00016
+# 8 4 8 1000000 0.00016 # saturated
 cs=1
 rf=3
 vr=50
