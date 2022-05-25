@@ -11,8 +11,10 @@ import pickle
 rfs = [3]
 pas = [4]
 cos = [4]
-pos = [4]
-vrs = [1, 2, 3, 4, 5, 6]
+pos =[4]
+vrs = [7, 8, 9, 10, 11, 30, 31]
+# vrs = [12, 13]
+# vrs = [14, 15, 17, 18, 20, 21]
 
 def fetch_experiment_data():
     experiments= []

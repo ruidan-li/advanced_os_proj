@@ -17,10 +17,10 @@ from matplotlib.colors import ListedColormap
 from matplotlib.lines import Line2D
 
 rfs = [3]
-pas = [4]
+pas = [8]
 cos = [4]
-pos = [4]
-vrs = [15]
+pos = [8]
+vrs = [50]
 
 
 def fetch_experiment_data():

@@ -18,9 +18,9 @@ sed "s/topic=test/topic=$topic/g; s/partition.num=xx/partition.num=$pa/g" basic.
 cd ..
 
 # adjust run.sh
-. ./run.sh $co $po current.ini $op $sa
+. ./run.sh $co $po current.ini $op $sa $vr
 
 # run analysis.py
-rm -rf ./res/$topic
+mv ./res/$topic /tmp/$topic
 mkdir -p ./res/$topic
 python3 analysis3.py ./res/$topic
