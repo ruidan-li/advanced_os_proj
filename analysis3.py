@@ -261,6 +261,7 @@ def process_raw_data_time(raw_data):
 
             # ----------------------------
             # single consumer
+            # ----------------------------
             avg, p50, p90, p99 = get_4_stats(line["latencies"]["all"])
             results["consumers"][pid]["latencies"]["avg"].append(
                 {"timestamp": ts, "value": avg}
@@ -282,11 +283,13 @@ def process_raw_data_time(raw_data):
             # this is bad practice, but we need to do this fast
             del line["latencies"]["all"]
             del line["processed"]["all"]
+            # ----------------------------
             # end of single consumer
             # ----------------------------
 
             # ----------------------------
             # partitions
+            # ----------------------------
             for partition in line["latencies"]:
                 if (
                     partition not in results["partitions"]
@@ -333,6 +336,7 @@ def process_raw_data_time(raw_data):
                 results["partitions"][partition]["throughput"].append(
                     {"timestamp": ts, "value": throughput, "pid": line["pid"]}
                 )
+            # ----------------------------
             # end of partitions
             # ----------------------------
 
@@ -348,9 +352,6 @@ def process_raw_data_time(raw_data):
                 results["consumers"][pid][diff] = sorted(
                     results["consumers"][pid][diff], key=lambda v: v["timestamp"]
                 )
-
-    # results["consumers"] =
-    # for pid in results["consumers"]:
 
     # sort partitions by timestamp, make sure that everything is sorted asc
     for partition in results["partitions"]:
@@ -390,6 +391,7 @@ def extract_from_logs_cntr():
         for filename in files:
             pid = get_pid(filename)
             lst = process_one_file(join(dirname, filename))
+            # print(pid)
             raw_data[pid] = lst
     result = process_raw_data_cntr(raw_data)
     return result
@@ -416,7 +418,6 @@ def extract_who_consume_the_partition(times):
                 consumers[line["pid"]] = 0
             consumers[line["pid"]] += 1
         partitions[partition] = list(consumers.keys())
-        # print(f"partition: {partition}, consumers: {list(consumers.keys())}")
     return partitions
 
 
