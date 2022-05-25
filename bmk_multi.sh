@@ -7,6 +7,7 @@
 # op=$6 number of operations
 # sa=$7 sampling interval (deprecated, use line 22, 27 of consumer.py instead)
 # 8 4 8 1000000 0.00016
+cs=1
 rf=3
 vr=50
 op=10000000
@@ -19,7 +20,7 @@ partition() {
     co=$2
     po=$3
     echo       $rf $pa $co $po $vr $op $sa $ps
-    . ./bmk.sh $rf $pa $co $po $vr $op $sa
+    . ./bmk.sh $rf $pa $co $po $vr $op $sa $cs
 }
 
 partition 8 4 8

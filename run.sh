@@ -12,7 +12,7 @@ mv logs_cntr $backup_dir
 mv logs_time $backup_dir 
 mkdir -p logs logs_cntr logs_time
 cd src
-./consume_driver.py $3 $1 $5 2 120 350 > tmp.out &
+./consume_driver.py $3 $1 $5 $7 120 360 > tmp.out &
 sleep 2
 ./produce_driver.py $3 $2 $4 -s
 cd ..
