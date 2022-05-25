@@ -13,7 +13,7 @@ def start_consume(config, sample_interval, put_to_sleep, sleep_delay_sec, sleep_
     consumer = KafkaConsumer(config, topic=[config.pop('topic')], sample_interval=sample_interval)
 
     consumer.start()
-    consumer.basic_consume(timeout, 60, put_to_sleep, sleep_delay_sec, sleep_duration)
+    consumer.basic_consume(timeout, 120, put_to_sleep, sleep_delay_sec, sleep_duration)
 
 
 
