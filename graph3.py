@@ -4,11 +4,12 @@ import shutil
 from os.path import join
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.collections import LineCollection
 from matplotlib.colors import ListedColormap
 from matplotlib.lines import Line2D
 from matplotlib.markers import MarkerStyle
+
+from argparse import ArgumentParser, ArgumentTypeError
 
 rfs = [3]
 pas = [4]
@@ -17,7 +18,7 @@ pos = [4]
 vrs = [22]
 
 
-def fetch_experiment_data():
+def fetch_experiment_data(output_folder, base_dir="res", folder=None):
     experiments = []
 
     for vr in vrs:
@@ -26,15 +27,14 @@ def fetch_experiment_data():
                 for co in cos:
                     for po in pos:
                         param = f"rf{rf}-pa{pa}-co{co}-po{po}-vr{vr}"
-                        # param_short = f"{rf};{pa};{co};{po};{vr}"
-                        folder = f"topic-{param}"
-                        fpath = join(os.getcwd(), f"res/{folder}/res_obj.pickle")
+                        folder = f"topic-{param}" if folder is None else folder
+                        fpath = join(base_dir, "res_obj.pickle")
                         fh = open(fpath, "rb")
                         res_obj = pickle.load(fh)
                         experiments.append((param, res_obj))
     print("num of experiments loaded:", len(experiments))
 
-    output_folder = "./fig/" + "_".join(
+    output_folder = join(output_folder, "_".join(
         [
             "-".join(map(str, rfs)),
             "-".join(map(str, pas)),
@@ -42,12 +42,14 @@ def fetch_experiment_data():
             "-".join(map(str, pos)),
             "-".join(map(str, vrs)),
         ]
-    )
+    ))
 
     print(f"Creating output directory {output_folder} if does not exist")
     if os.path.exists(output_folder):
+        print(f"Cleaning output folder={output_folder}")
         shutil.rmtree(output_folder, ignore_errors=True)
 
+    print(f"Creating output folder={output_folder}")
     os.makedirs(output_folder)
 
     return experiments, output_folder
@@ -516,7 +518,19 @@ def plot_experiments(experiments, output_folder, metric="avg"):
         print("Saving partition plots")
         plt.savefig(f"{output_folder}/{name}-partition.png", bbox_inches="tight")
 
+def dir_path(path):
+    if os.path.isdir(path):
+        return path
+    else:
+        raise ArgumentTypeError(f"readable_dir:{path} is not a valid path")
 
-experiments, output_folder = fetch_experiment_data()
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("base_dir", type=dir_path, default=join(os.getcwd(), "res"))
+    parser.add_argument("output_folder", default=join(os.getcwd(), "fig"))
+    parser.add_argument("folder", default=None)
+    args = parser.parse_args()
 
-plot_experiments(experiments, output_folder)
+
+    experiments, output_folder = fetch_experiment_data(output_folder=args.output_folder, base_dir=args.base_dir, folder=args.folder)
+    plot_experiments(experiments, output_folder)

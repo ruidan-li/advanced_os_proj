@@ -1,12 +1,12 @@
 import json
 import os
 import sys
-from audioop import mul
-from os import listdir
-from os.path import isfile, join
-from pprint import pprint
+import shutil
+from os.path import join
+#  from pprint import pprint
+from argparse import ArgumentParser, ArgumentTypeError
 
-from numpy import result_type
+import pickle
 
 # output will be like this
 #
@@ -375,9 +375,9 @@ def get_pid(filename):
     return names[-1].replace(".out", "")
 
 
-def extract_consumer_metadata():
+def extract_consumer_metadata(base_dir):
     metadata = {}
-    for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs")):
+    for (dirname, dirs, files) in os.walk(join(base_dir, "logs")):
         for filename in files:
             pid = get_pid(filename)
             meta = json.load(open(join(dirname, filename)))
@@ -385,9 +385,9 @@ def extract_consumer_metadata():
     return metadata
 
 
-def extract_from_logs_cntr():
+def extract_from_logs_cntr(base_dir):
     raw_data = {}
-    for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs_cntr")):
+    for (dirname, dirs, files) in os.walk(join(base_dir, "logs_cntr")):
         for filename in files:
             pid = get_pid(filename)
             lst = process_one_file(join(dirname, filename))
@@ -397,9 +397,9 @@ def extract_from_logs_cntr():
     return result
 
 
-def extract_from_logs_time():
+def extract_from_logs_time(base_dir):
     raw_data = {}
-    for (dirname, dirs, files) in os.walk(join(os.getcwd(), "logs_time")):
+    for (dirname, dirs, files) in os.walk(join(base_dir, "logs_time")):
         for filename in files:
             pid = get_pid(filename)
             lst = process_one_file(join(dirname, filename))
@@ -434,25 +434,47 @@ def extract_who_get_the_partitions(partition_consumers):
 
     return consumers
 
+def dir_path(path):
+    if os.path.isdir(path):
+        return path
+    else:
+        raise ArgumentTypeError(f"readable_dir:{path} is not a valid path")
 
-print("Running the analysis")
-consumer_metadata = extract_consumer_metadata()
-msg_based = extract_from_logs_cntr()
-time_based = extract_from_logs_time()
-grouped_by_partition = extract_who_consume_the_partition(time_based)
-grouped_by_consumer = extract_who_get_the_partitions(grouped_by_partition)
 
-import pickle
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("output_folder")
+    parser.add_argument("base_output_folder", default=join(os.getcwd(), "res"))
+    parser.add_argument("base_dir", type=dir_path, default=os.getcwd())
+    args = parser.parse_args()
 
-print("Saving the analysis result")
-filehandler = open(f"{sys.argv[1]}/res_obj.pickle", "wb")
-pickle.dump(
-    (
-        consumer_metadata,
-        msg_based,
-        time_based,
-        grouped_by_partition,
-        grouped_by_consumer,
-    ),
-    filehandler,
-)
+    print(f"Analyzing {args.base_dir}")
+
+    print("Running the analysis")
+    consumer_metadata = extract_consumer_metadata(args.base_dir)
+    msg_based = extract_from_logs_cntr(args.base_dir)
+    time_based = extract_from_logs_time(args.base_dir)
+    grouped_by_partition = extract_who_consume_the_partition(time_based)
+    grouped_by_consumer = extract_who_get_the_partitions(grouped_by_partition)
+
+    output_folder = join(args.base_output_folder, args.output_folder)
+
+    if os.path.exists(output_folder):
+        print(f"Cleaning output folder={output_folder}")
+        shutil.rmtree(output_folder, ignore_errors=True)
+
+    print(f"Creating output folder={output_folder}")
+    os.makedirs(output_folder)
+
+    print("Saving the analysis result")
+    filehandler = open(f"{output_folder}/res_obj.pickle", "wb")
+    pickle.dump(
+        (
+            consumer_metadata,
+            msg_based,
+            time_based,
+            grouped_by_partition,
+            grouped_by_consumer,
+        ),
+        filehandler,
+    )
