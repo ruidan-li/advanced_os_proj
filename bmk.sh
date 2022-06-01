@@ -5,6 +5,7 @@ po=$4 # num. producer
 vr=$5 # version of the code
 op=$6 # number of operations
 sa=$7 # sampling interval
+cs=$8 # num. consumer to put to sleep
 
 cd src
 
@@ -18,9 +19,9 @@ sed "s/topic=test/topic=$topic/g; s/partition.num=xx/partition.num=$pa/g" basic.
 cd ..
 
 # adjust run.sh
-. ./run.sh $co $po current.ini $op $sa
+. ./run.sh $co $po current.ini $op $sa $vr $cs
 
 # run analysis.py
-rm -rf ./res/$topic
+mv ./res/$topic /tmp/$topic
 mkdir -p ./res/$topic
-python3 analysis2.py ./res/$topic
+python3 analysis3.py ./res/$topic
