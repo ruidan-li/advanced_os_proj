@@ -3,6 +3,7 @@ import pickle
 import shutil
 from os.path import join
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.colors import ListedColormap
@@ -10,6 +11,8 @@ from matplotlib.lines import Line2D
 from matplotlib.markers import MarkerStyle
 
 from argparse import ArgumentParser, ArgumentTypeError
+
+mpl.use('Agg')
 
 rfs = [3]
 pas = [4]
